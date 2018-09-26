@@ -5,15 +5,15 @@
 // Program States
 #define CONTROLLER_FOLLOW_LINE 1
 #define CONTROLLER_DISTANCE_MEASURE 2
-#define CONTROLLER_ROTATION_MEASURE 3
-#define CONTROLLER_FULL_CALIBRATION 4
+#define CONTROLLER_CALIBRATE_FOLLOW 3
 #define CONTROLLER_DUMMY_STATE 999
 
 // Threshold for detecting if there is a line underneath the IR sensors.
 #define IR_THRESHOLD 700
 
-int current_state = CONTROLLER_FOLLOW_LINE; // Change this variable to determine which controller to run
-const int threshold = 700;
+// Change this variable to determine which controller to run
+int current_state = CONTROLLER_FOLLOW_LINE;
+
 // Variables for storing sensor data.
 int cm_distance = 1000;
 int edge_left = 1000;
@@ -22,25 +22,36 @@ int line_center = 1000;
 int line_right = 1000;
 int edge_right = 1000;
 
-// Time measurement variables, in milliseconds.
-unsigned long t_0, t_mid, t, delta_t, t_delay;
+// Variables for storing state related auxiliary information.
+int right_wheel_rotating = 0;
+int left_wheel_rotating = 0;
 
-// Velocity when moving forward, in centimeters per millisecond
-float cm_ms = 0.002784998;
+// Time measurement variables, in milliseconds.
+unsigned long t_0, t_logic, t, delta_t, t_delay;
+
+// Constants of the environment that we are working in
+float m_s = 0; // 0.002784998 or that times ten depending on the scale;
 float rad_ms = 0; // Velocity when turning, in radians per millisecond
 float pi = 3.14159;
+float sparki_wheel_radius = 0; // FIXME
+float sparki_wheel_circumference = sparki_wheel_radius * 2 * pi;
+float sparki_axle_distance = 0; // FIXME
 
-// Total distance travelled, in milliseconds.
+// Total distance travelled, in centimeters. Also number of laps.
 float total_distance = 0;
+unsigned lap_counter = 0;
 
 // Current approximate position, taking starting line as a "ground truth".
 float pose_x = 0., pose_y = 0., pose_theta = 0.; 
-float delta_t_s, delta_x, delta_y, delta_theta;
+
+// More delta variables, in floats to avoid lack of precision.
+float delta_t_s, delta_x, delta_y, delta_theta, dotx_r;
 
 void setup() {
+  // Boring setup code.
   sparki.clearLCD();
   delay(1000); // Wait a bit so we don't rush off the line right away.
-  pose_x = 0.;
+  pose_x = 0.; // probably unnecessary
   pose_y = 0.;
   pose_theta = 0.;
 }
@@ -57,37 +68,21 @@ void readSensors() {
 
 void measure_30cm_speed() {
   // Clear LCD, time how long it takes to move a fixed distance
-  // Recalibrate the forward velocity accordingly.
+  // Recalibrate the angular velocity accordingly.
+  float radians_travelled = 30 / sparki_wheel_circumference * 2 * pi;
   sparki.clearLCD();
   t_0 = millis();
   sparki.moveForward(30);
   t = millis();
   delta_t = t - t_0;
-  // delta_t_s = delta_t / 1000.0;
+  pose_x += 30;
+  rad_ms = radians_travelled / delta_t;
   sparki.print("Time elapsed: ");
   sparki.println(delta_t);
-  cm_ms = 30.0 / delta_t; // Recalibrate the velocity while moving forwards.
-  // Comment the above out to stick with a static value.
+  m_s = 30.0 / delta_t * 10; // Recalibrate the velocity while moving forwards.
+  // Comment the above out to stick with a static value, if one is provided in definitions.
   sparki.print("Forward velocity: ");
-  sparki.println(cm_ms);
-  sparki.updateLCD();
-  delay(500);
-}
-
-void measure_360deg_rotation() {
-  // Clear LCD, time how long it takes to rotate a fixed distance
-  // Recalibrate the rotational velocity accordingly
-  sparki.clearLCD();
-  t_0 = millis();
-  sparki.moveRight(360);
-  t = millis();
-  delta_t = t - t_0;
-  delta_t_s = delta_t / 1000.0;
-  sparki.print("Time elapsed: ");
-  sparki.println(delta_t);
-  rad_ms = 2 * pi / delta_t;
-  sparki.print("Rotational velocity: ");
-  sparki.println(rad_ms);
+  sparki.println(m_s);
   sparki.updateLCD();
   delay(500);
 }
@@ -103,27 +98,19 @@ bool allLinesBelowThreshold() {
 }
 
 void updateOdometry() {
-  if (delta_theta != 0) {
-    // If we're turning, multiply the rotational velocity times the time taken
-    // times either or -1 for the direction in which we're turning
-    pose_theta += rad_ms * delta_theta * delta_t;
-    if (pose_theta >= 2 * pi) {
-      // Loop the angle around
-      pose_theta = 0;
-    }
-  }
-  else {
-    // Otherwise, we've moved forward at least a little bit
-    // Update the odometry for how much we've moved forwards
-    delta_x = cm_ms * cos(pose_theta) * delta_t;
-    delta_y = cm_ms * sin(pose_theta) * delta_t;
-    pose_x = pose_x + delta_x;
-    pose_y = pose_y + delta_y;
-    total_distance += sqrt(delta_x * delta_x + delta_y * delta_y);
-  }
+  // Update odometry using kinematics based on angular velocity and whatnot
+  delta_theta = (right_wheel_rotating - left_wheel_rotating) * rad_ms * sparki_wheel_radius / sparki_axle_distance * delta_t;
+  dotx_r = (right_wheel_rotating + left_wheel_rotating) * rad_ms * sparki_wheel_radius / 2;
+  delta_x = dotx_r * cos(pose_theta) * delta_t;
+  delta_y = dotx_r * sin(pose_theta) * delta_t;
+  pose_x += delta_x;
+  pose_y += delta_y;
+  pose_theta += delta_theta;
+  total_distance += sqrt(delta_x * delta_x + delta_y * delta_y);
 }
 
 void displayOdometry() {
+  // Print all of the major odometry info that we have
   sparki.print("X: ");
   sparki.println(pose_x);
   sparki.print("Y: ");
@@ -135,6 +122,8 @@ void displayOdometry() {
 }
 
 void loop() {
+  // Start our timing, perform all of the necessary setup, display some stuff, figure out logic
+  t_0 = millis();
 
   sparki.clearLCD();
 
@@ -143,57 +132,59 @@ void loop() {
   updateOdometry();
   displayOdometry();
 
-  t_0 = millis();
-
   switch (current_state) {
     case CONTROLLER_FOLLOW_LINE:
       // Follow the line, applying course correction when it curves
       if ( allLinesBelowThreshold() ) {
-        // delta_theta = 0;
-        pose_x = pose_y = pose_theta = 0;
+        pose_x = pose_y = pose_theta = 0; // Comment me out to disable loop closure
+        lap_counter++; // We've probably found the end of the lap, so increment this
+        left_wheel_rotating = right_wheel_rotating = 1;
+        sparki.moveForward(); // Ensure that we move off the line rather than just spinning there
       }
       else if ( line_left < IR_THRESHOLD )
       {
-        delta_theta = -1;
+        right_wheel_rotating = -1;
+        left_wheel_rotating = 1;
         sparki.moveLeft();
       }
       else if ( line_right < IR_THRESHOLD )
       {
-        delta_theta = 1;
+        right_wheel_rotating = 1;
+        left_wheel_rotating = -1;
         sparki.moveRight();
       }
       // If there's no course correction necessary, just move forward
       else if ( onlyCenterLineBelowThreshold() )
       {
-        delta_theta = 0;
+        left_wheel_rotating = right_wheel_rotating = 1;
         sparki.moveForward();
       }
       break;
     case CONTROLLER_DISTANCE_MEASURE:
       measure_30cm_speed();
       break;
-    case CONTROLLER_ROTATION_MEASURE:
-      measure_360deg_rotation();
-      break;
-    case CONTROLLER_FULL_CALIBRATION:
+    case CONTROLLER_CALIBRATE_FOLLOW:
       measure_30cm_speed();
-      measure_360deg_rotation();
       current_state = CONTROLLER_FOLLOW_LINE;
-      delta_t = 0; // Avoid change in odometry during the first iteration of the loop
       break;
   }
 
   // Measure the amount of time that the logic of the loop took
-  t_mid = millis();
+  t_logic = millis();
 
   sparki.updateLCD();
   // Try to ensure that each loop takes as close to 100ms as we can manage
-  t_delay = (100 - (t_mid - t_0));
+  t_delay = (100 - (t_logic - t_0));
   if (t_delay > 0){
     delay(t_delay);
   }
 
   // Ensure that loop timings are right for the odometry
   t = millis();
-  delta_t = t - t_0;
+  if (current_state == CONTROLLER_CALIBRATE_FOLLOW){
+    delta_t = 0; // Avoid change in odometry during the first iteration of the loop
+  }
+  else {
+    delta_t = t - t_0;
+  }
 }
