@@ -1,7 +1,5 @@
 #include <sparki.h>
 
-#define CYCLE_TIME .100  // seconds
-
 // Program States
 #define CONTROLLER_FOLLOW_LINE 1
 #define CONTROLLER_DISTANCE_MEASURE 2
@@ -12,7 +10,7 @@
 #define IR_THRESHOLD 700
 
 // Change this variable to determine which controller to run
-int current_state = CONTROLLER_FOLLOW_LINE;
+int current_state = CONTROLLER_CALIBRATE_FOLLOW;
 
 // Variables for storing sensor data.
 int cm_distance = 1000;
@@ -129,13 +127,15 @@ void loop() {
 
   readSensors();
 
-  updateOdometry();
-  displayOdometry();
-
   switch (current_state) {
     case CONTROLLER_FOLLOW_LINE:
+      // Print our odometry, since we need to display that in this case
+      updateOdometry();
+      displayOdometry();
+
       // Follow the line, applying course correction when it curves
-      if ( allLinesBelowThreshold() ) {
+      if ( allLinesBelowThreshold() ) 
+      {
         pose_x = pose_y = pose_theta = 0; // Comment me out to disable loop closure
         lap_counter++; // We've probably found the end of the lap, so increment this
         left_wheel_rotating = right_wheel_rotating = 1;
@@ -143,14 +143,14 @@ void loop() {
       }
       else if ( line_left < IR_THRESHOLD )
       {
-        right_wheel_rotating = -1;
-        left_wheel_rotating = 1;
+        right_wheel_rotating = 1;
+        left_wheel_rotating = -1;
         sparki.moveLeft();
       }
       else if ( line_right < IR_THRESHOLD )
       {
-        right_wheel_rotating = 1;
-        left_wheel_rotating = -1;
+        right_wheel_rotating = -1;
+        left_wheel_rotating = 1;
         sparki.moveRight();
       }
       // If there's no course correction necessary, just move forward
@@ -172,19 +172,16 @@ void loop() {
   // Measure the amount of time that the logic of the loop took
   t_logic = millis();
 
+  // Display whatever we printed to the LCD during our state machine logic
   sparki.updateLCD();
+
   // Try to ensure that each loop takes as close to 100ms as we can manage
   t_delay = (100 - (t_logic - t_0));
   if (t_delay > 0){
     delay(t_delay);
   }
 
-  // Ensure that loop timings are right for the odometry
+  // Ensure that delta_t timings are right for the odometry
   t = millis();
-  if (current_state == CONTROLLER_CALIBRATE_FOLLOW){
-    delta_t = 0; // Avoid change in odometry during the first iteration of the loop
-  }
-  else {
-    delta_t = t - t_0;
-  }
+  delta_t = t - t_0;
 }
