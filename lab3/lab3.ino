@@ -5,6 +5,7 @@
 #define CYCLE_TIME .050 // Default 50ms cycle time
 #define AXLE_DIAMETER 0.0857 // meters
 #define WHEEL_RADIUS 0.03 // meters
+#define WHEEL_SPEED 1.86 // radians/second
 #define CONTROLLER_FOLLOW_LINE 1
 #define CONTROLLER_GOTO_POSITION_PART2 2
 #define CONTROLLER_GOTO_POSITION_PART3 3
@@ -29,6 +30,8 @@ float pose_x = 0., pose_y = 0., pose_theta = 0.;
 float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
 float d_err = 0., b_err = 0., h_err = 0.; // Distance error (m), bearing error (rad), heading error (rad)
 float phi_l = 0., phi_r = 0.; // Wheel rotation (radians)
+float total_distance = 0;
+unsigned long delta_t = 0;
 
 
 // Wheel rotation vars
@@ -45,12 +48,42 @@ const float distance_gain = 1.;
 const float theta_gain = 1.;
 float dX  = 0., dTheta = 0.;
 
+float to_centimeters(double meters) {
+  return meters * 100.;
+}
+
+float to_meters(double centimeters) {
+  return centimeters / 100.;
+}
+
 float to_radians(double deg) {
-  return  deg * 3.1415/180.;
+  return deg * M_PI / 180.;
 }
 
 float to_degrees(double rad) {
-  return  rad * 180 / 3.1415;
+  return rad * 180 / M_PI;
+}
+
+float to_seconds(unsigned ms) {
+  return ms / 1000.;
+}
+
+float to_milliseconds(float s) {
+  return s * 1000.;
+}
+
+float bound_angle(float rad) {
+  // Only check the angle bound once, hoping that it's not outrageously bad.
+  if (rad > M_PI) rad -= 2*M_PI;
+  if (rad < M_PI) rad += 2*M_PI;
+  return rad;
+}
+
+float hard_bound_angle(float rad) {
+  // For *really* ensuring that the angle is in (-pi, pi).
+  while (rad > M_PI) rad -= 2*M_PI;
+  while (rad < M_PI) rad += 2*M_PI;
+  return rad;
 }
 
 void setup() {
@@ -66,12 +99,30 @@ void setup() {
 
 // Sets target robot pose to (x,y,t) in units of meters (x,y) and radians (t)
 void set_pose_destination(float x, float y, float t) {
+  float dx, dy;
   dest_pose_x = x;
   dest_pose_y = y;
-  dest_pose_theta = t;
-  if (dest_pose_theta > M_PI) dest_pose_theta -= 2*M_PI;
-  if (dest_pose_theta < -M_PI) dest_pose_theta += 2*M_PI;
-  orig_dist_to_goal = 0; // TODO
+  dest_pose_theta = hard_bound_angle(t);
+  orig_dist_to_goal = set_position_err(); // FIXME?
+}
+
+float set_position_err() {
+  float dx = dest_pose_x - pose_x;
+  float dy = dest_pose_y - pose_y;
+  d_err = sqrt(dx*dx + dy*dy);
+  return d_err;
+}
+
+float set_bearing_err() {
+  float dx = dest_pose_x - pose_x;
+  float dy = dest_pose_y - pose_y;
+  b_err = atan2(dy, dx) - pose_theta;
+  return b_err;
+}
+
+float set_heading_err() {
+  h_err = dest_pose_theta - pose_theta;
+  return h_err;
 }
 
 void readSensors() {
@@ -82,11 +133,33 @@ void readSensors() {
 
 
 void updateOdometry() {
-  // TODO: Update pose_x, pose_y, pose_theta
+  float delta_x, delta_y, delta_theta, delta_phi_l, delta_phi_r;
+  // FIXME?: Update pose_x, pose_y, pose_theta
+  for (int i = 0; i < delta_t; i++) {
+    // For loop method should work a lot better around curves?
+    delta_phi_l = WHEEL_SPEED * left_speed_pct / 1000;
+    delta_phi_r = WHEEL_SPEED * right_speed_pct / 1000;
+    delta_theta = (right_wheel_rotating * delta_phi_r - left_wheel_rotating * delta_phi_l)
+                  * WHEEL_RADIUS / AXLE_DIAMETER; 
+    dotx_r = (right_wheel_rotating * delta_phi_r + left_wheel_rotating * delta_phi_l)
+                  * WHEEL_RADIUS / 2;
+    delta_x = dotx_r * cos(pose_theta);
+    delta_y = dotx_r * sin(pose_theta);
+    phi_l += delta_phi_l;
+    phi_r += delta_phi_r;
+    pose_x += delta_x;
+    pose_y += delta_y;
+    pose_theta += delta_theta;
+    // Bound theta
+    pose_theta = bound_angle(pose_theta);
+    phi_l = bound_angle(phi_l); // may not need to bound these?
+    phi_r = bound_angle(phi_r);
+  }
 
-  // Bound theta
-  if (pose_theta > M_PI) pose_theta -= 2.*M_PI;
-  if (pose_theta <= -M_PI) pose_theta += 2.*M_PI;
+  // Update our current estimates of the error in our position, etc.
+  set_position_err();
+  set_heading_err();
+  set_bearing_err();
 }
 
 void displayOdometry() {
@@ -122,32 +195,58 @@ void loop() {
       // Useful for testing odometry updates
       readSensors();
       if (line_center < threshold) {
-        // TODO: Fill in odometry code
+        right_wheel_rotating = left_wheel_rotating = FWD;
+        left_speed_pct = right_speed_pct = 1;
         sparki.moveForward();
       } else if (line_left < threshold) {
-        // TODO: Fill in odometry code
+        right_wheel_rotating = FWD;
+        left_wheel_rotating = BCK;
+        left_speed_pct = right_speed_pct = 1;
         sparki.moveLeft();
       } else if (line_right < threshold) {
-        // TODO: Fill in odometry code
+        right_wheel_rotating = BCK;
+        left_wheel_rotating = FWD;
+        left_speed_pct = right_speed_pct = 1;
         sparki.moveRight();
       } else {
-        sparki.moveStop();
+        right_wheel_rotating = left_wheel_rotating = NONE;
+        left_speed_pct = right_speed_pct = 0; // probably extraneous
+        sparki.moveStop(); // stop if we reach something that's not line
       }
 
       // Check for start line, use as loop closure
       if (line_left < threshold && line_right < threshold && line_center < threshold) {
-        pose_x = 0.;
-        pose_y = 0.;
-        pose_theta = 0.;
+        pose_x = pose_y = pose_theta = 0.;
       } 
-      break;
+
+      // Make sure to update the odometry so we can see what's happening
+      updateOdometry();
+      break;   
     case CONTROLLER_GOTO_POSITION_PART2:
-      // TODO: Implement solution using moveLeft, moveForward, moveRight functions
+      // Implement solution using moveLeft, moveForward, moveRight functions
       // This case should arrest control of the program's control flow (taking as long as it needs to, ignoring the 100ms loop time)
       // and move the robot to its final destination
 
+      // Reduce bearing error to 0
+      if (b_err > 0) {
+        sparki.moveLeft(to_degrees(b_err));
+      }
+      else {
+        sparki.moveRight(-to_degrees(b_err));
+      }
+
+      // Reduce position error to 0
+      sparki.moveForward(to_centimeters(d_err));
+
+      // Reduce heading error to 0
+      if (h_err > 0){
+        sparki.moveLeft(to_degrees(b_err));
+      }
+      else {
+        sparki.moveRight(-to_degrees(b_err));
+      }
       
-      break;      
+      break;   
     case CONTROLLER_GOTO_POSITION_PART3:      
       updateOdometry();
       // TODO: Implement solution using motorRotate and proportional feedback controller.
@@ -155,6 +254,18 @@ void loop() {
       //      sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
       //      sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
 
+      // TODO add calculations here of what the below four values should be.
+
+      right_wheel_rotating = NONE; // change this and the below 3 lines based on calculations of what trajectory to take
+      left_wheel_rotating = NONE;
+      right_speed_pct = 0; // value between 0 and 1
+      left_speed_pct = 0;
+
+      // Perform invariant updates, apply all values to the two motors
+      right_dir = right_wheel_rotating;
+      left_dir = -left_wheel_rotating;
+      sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
+      sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
       break;
   }
 
@@ -168,5 +279,6 @@ void loop() {
     delay(1000*CYCLE_TIME - delay_time); // each loop takes CYCLE_TIME ms
   else
     delay(10);
+  delta_t = start_time - millis();
 }
 
