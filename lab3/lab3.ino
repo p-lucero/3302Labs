@@ -9,6 +9,7 @@
 #define CONTROLLER_FOLLOW_LINE 1
 #define CONTROLLER_GOTO_POSITION_PART2 2
 #define CONTROLLER_GOTO_POSITION_PART3 3
+#define CONTROLLER_DUMMY_STATE 999
 
 #define FWD 1
 #define NONE 0
@@ -45,7 +46,7 @@ int right_wheel_rotating = NONE;
 
 // X and Theta Updates (global for debug output purposes)
 // and their respective feedback controller gains
-const float distance_gain = 1.;
+const float distance_gain = 1.; // TODO tweak these values, and maybe add a second theta_gain because it has two inputs?
 const float theta_gain = 1.;
 float dX  = 0., dTheta = 0.;
 
@@ -152,15 +153,13 @@ void readSensors() {
 
 void updateOdometry() {
   float delta_x, delta_y, delta_theta, delta_phi_l, delta_phi_r;
-  // FIXME?: Update pose_x, pose_y, pose_theta
+  // FIXME? may have the wrong or wrongly implemented formulae here, but probably close to correct w/usage of angular velocity &c.
   for (int i = 0; i < delta_t; i++) {
     // For loop method should work a lot better around curves?
-    delta_phi_l = WHEEL_SPEED * left_speed_pct / 1000;
-    delta_phi_r = WHEEL_SPEED * right_speed_pct / 1000;
-    delta_theta = (right_wheel_rotating * delta_phi_r - left_wheel_rotating * delta_phi_l)
-                  * WHEEL_RADIUS / AXLE_DIAMETER; 
-    dotx_r = (right_wheel_rotating * delta_phi_r + left_wheel_rotating * delta_phi_l)
-                  * WHEEL_RADIUS / 2;
+    delta_phi_l = left_wheel_rotating * WHEEL_SPEED * left_speed_pct / 1000;
+    delta_phi_r = right_wheel_rotating * WHEEL_SPEED * right_speed_pct / 1000;
+    delta_theta = (delta_phi_r - delta_phi_l) * WHEEL_RADIUS / AXLE_DIAMETER; 
+    dotx_r = (delta_phi_r + delta_phi_l) * WHEEL_RADIUS / 2;
     delta_x = dotx_r * cos(pose_theta);
     delta_y = dotx_r * sin(pose_theta);
     phi_l += delta_phi_l;
@@ -264,6 +263,9 @@ void loop() {
       else {
         sparki.moveRight(-to_degrees(b_err));
       }
+
+      delay(5000); // Make sure the robot got to where it should've
+      //  FIXME? can also add a transition to a dummy state here to further solidify this
       
       break;   
     case CONTROLLER_GOTO_POSITION_PART3:      
@@ -280,8 +282,6 @@ void loop() {
 
       right_speed_pct = (2 * dX - dTheta * AXLE_DIAMETER) / 2 * WHEEL_RADIUS;
       left_speed_pct = (2 * dX + dTheta * AXLE_DIAMETER) / 2 * WHEEL_RADIUS;
-      right_speed_pct /= speed_pct_clamp; // clamp to range [0, 1] in R; this constant set during destination set function
-      left_speed_pct /= speed_pct_clamp;
 
       if (right_speed_pct > 0){
         right_wheel_rotating = FWD;
@@ -303,14 +303,26 @@ void loop() {
         left_wheel_rotating = NONE;
       }
 
-      right_wheel_pct = abs(right_wheel_pct);
-      left_wheel_pct = abs(left_wheel_pct);
+      right_speed_pct = abs(right_speed_pct); // Avoid signage errors in the following code
+      left_speed_pct = abs(left_speed_pct);
+
+      if (right_speed_pct > left_speed_pct) { // Always make full use of at least one wheel, but which one?
+        left_speed_pct = left_speed_pct / right_speed_pct; // Preserve the ratio of one to the other
+        right_speed_pct = 1; // and then maximize the one that was greater
+      }
+      else {
+        right_speed_pct = right_speed_pct / left_speed_pct;
+        left_speed_pct = 1;
+      }
 
       // Perform invariant updates, apply all values to the two motors
       right_dir = right_wheel_rotating;
       left_dir = -left_wheel_rotating;
       sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
       sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
+      break;
+    case CONTROLLER_DUMMY_STATE:
+      // Does nothing. Sometimes helpful. Don't use this in any non-debug code paths!!!
       break;
   }
 
