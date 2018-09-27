@@ -5,7 +5,7 @@
 #define CYCLE_TIME .050 // Default 50ms cycle time
 #define AXLE_DIAMETER 0.0857 // meters
 #define WHEEL_RADIUS 0.03 // meters
-#define WHEEL_SPEED 1.86 // radians/second
+#define WHEEL_SPEED 1.86 // radians/second; FIXME very approximate from not well known values!!!
 #define CONTROLLER_FOLLOW_LINE 1
 #define CONTROLLER_GOTO_POSITION_PART2 2
 #define CONTROLLER_GOTO_POSITION_PART3 3
@@ -31,6 +31,7 @@ float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
 float d_err = 0., b_err = 0., h_err = 0.; // Distance error (m), bearing error (rad), heading error (rad)
 float phi_l = 0., phi_r = 0.; // Wheel rotation (radians)
 float total_distance = 0;
+float speed_pct_clamp;
 unsigned long delta_t = 0;
 
 
@@ -48,6 +49,8 @@ const float distance_gain = 1.;
 const float theta_gain = 1.;
 float dX  = 0., dTheta = 0.;
 
+// Various conversion and helper functions
+// Centimeters <==> Meters
 float to_centimeters(double meters) {
   return meters * 100.;
 }
@@ -56,6 +59,7 @@ float to_meters(double centimeters) {
   return centimeters / 100.;
 }
 
+// Radians <==> Degrees
 float to_radians(double deg) {
   return deg * M_PI / 180.;
 }
@@ -64,6 +68,7 @@ float to_degrees(double rad) {
   return rad * 180 / M_PI;
 }
 
+// Seconds <==> Milliseconds
 float to_seconds(unsigned ms) {
   return ms / 1000.;
 }
@@ -72,6 +77,7 @@ float to_milliseconds(float s) {
   return s * 1000.;
 }
 
+// For enforcing bounds on angles in radians
 float bound_angle(float rad) {
   // Only check the angle bound once, hoping that it's not outrageously bad.
   if (rad > M_PI) rad -= 2*M_PI;
@@ -84,6 +90,17 @@ float hard_bound_angle(float rad) {
   while (rad > M_PI) rad -= 2*M_PI;
   while (rad < M_PI) rad += 2*M_PI;
   return rad;
+}
+
+// Navigational helpers, likely obsolete but included for the sake of thoroughness
+bool onlyCenterLineBelowThreshold() {
+  // Check if we're centered on a line and can move forwards
+  return (line_center < IR_THRESHOLD) && (line_left > IR_THRESHOLD) && (line_right > IR_THRESHOLD);
+}
+
+bool allLinesBelowThreshold() {
+  // Bad performance usually results if reading edge. If the destination line is longer, may be wise to uncomment the below
+  return (line_center < IR_THRESHOLD) && (line_left < IR_THRESHOLD) && (line_right < IR_THRESHOLD); // && (edge_left < IR_THRESHOLD) && (edge_right < IR_THRESHOLD)
 }
 
 void setup() {
@@ -104,6 +121,7 @@ void set_pose_destination(float x, float y, float t) {
   dest_pose_y = y;
   dest_pose_theta = hard_bound_angle(t);
   orig_dist_to_goal = set_position_err(); // FIXME?
+  speed_pct_clamp = (2 * orig_dist_to_goal + M_PI * AXLE_DIAMETER) / 2 * WHEEL_RADIUS;
 }
 
 float set_position_err() {
@@ -116,7 +134,7 @@ float set_position_err() {
 float set_bearing_err() {
   float dx = dest_pose_x - pose_x;
   float dy = dest_pose_y - pose_y;
-  b_err = atan2(dy, dx) - pose_theta;
+  b_err = atan2(dy, dx) - pose_theta; // from slides; maybe wrong FIXME?
   return b_err;
 }
 
@@ -150,6 +168,7 @@ void updateOdometry() {
     pose_x += delta_x;
     pose_y += delta_y;
     pose_theta += delta_theta;
+    total_distance += sqrt(delta_x * delta_x + delta_y * delta_y);
     // Bound theta
     pose_theta = bound_angle(pose_theta);
     phi_l = bound_angle(phi_l); // may not need to bound these?
@@ -249,17 +268,43 @@ void loop() {
       break;   
     case CONTROLLER_GOTO_POSITION_PART3:      
       updateOdometry();
-      // TODO: Implement solution using motorRotate and proportional feedback controller.
+      // Implement solution using motorRotate and proportional feedback controller.
       // sparki.motorRotate function calls for reference:
       //      sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
       //      sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
 
-      // TODO add calculations here of what the below four values should be.
+      // FIXME EXTREMELY EXPERIMENTAL.
 
-      right_wheel_rotating = NONE; // change this and the below 3 lines based on calculations of what trajectory to take
-      left_wheel_rotating = NONE;
-      right_speed_pct = 0; // value between 0 and 1
-      left_speed_pct = 0;
+      dX = distance_gain * d_err;
+      dTheta = theta_gain * (h_err + b_err);
+
+      right_speed_pct = (2 * dX - dTheta * AXLE_DIAMETER) / 2 * WHEEL_RADIUS;
+      left_speed_pct = (2 * dX + dTheta * AXLE_DIAMETER) / 2 * WHEEL_RADIUS;
+      right_speed_pct /= speed_pct_clamp; // clamp to range [0, 1] in R; this constant set during destination set function
+      left_speed_pct /= speed_pct_clamp;
+
+      if (right_speed_pct > 0){
+        right_wheel_rotating = FWD;
+      }
+      else if (right_speed_pct < 0){
+        right_wheel_rotating = BCK;
+      }
+      else {
+        right_wheel_rotating = NONE;
+      }
+
+      if (left_speed_pct > 0){
+        left_wheel_rotating = FWD;
+      }
+      else if (left_speed_pct < 0){
+        left_wheel_rotating = BCK;
+      }
+      else {
+        left_wheel_rotating = NONE;
+      }
+
+      right_wheel_pct = abs(right_wheel_pct);
+      left_wheel_pct = abs(left_wheel_pct);
 
       // Perform invariant updates, apply all values to the two motors
       right_dir = right_wheel_rotating;
@@ -279,6 +324,6 @@ void loop() {
     delay(1000*CYCLE_TIME - delay_time); // each loop takes CYCLE_TIME ms
   else
     delay(10);
-  delta_t = start_time - millis();
+  delta_t = start_time - millis(); // for odometry bookkeeping purposes
 }
 
