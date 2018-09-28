@@ -10,6 +10,7 @@
 #define CONTROLLER_GOTO_POSITION_PART2 2
 #define CONTROLLER_GOTO_POSITION_PART3 3
 #define CONTROLLER_DUMMY_STATE 999
+#define IR_THRESHOLD 700
 
 #define FWD 1
 #define NONE 0
@@ -32,7 +33,7 @@ float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
 float d_err = 0., b_err = 0., h_err = 0.; // Distance error (m), bearing error (rad), heading error (rad)
 float phi_l = 0., phi_r = 0.; // Wheel rotation (radians)
 float total_distance = 0;
-float speed_pct_clamp;
+float dotx_r;
 unsigned long delta_t = 0;
 
 
@@ -122,7 +123,6 @@ void set_pose_destination(float x, float y, float t) {
   dest_pose_y = y;
   dest_pose_theta = hard_bound_angle(t);
   orig_dist_to_goal = set_position_err(); // FIXME?
-  speed_pct_clamp = (2 * orig_dist_to_goal + M_PI * AXLE_DIAMETER) / 2 * WHEEL_RADIUS;
 }
 
 float set_position_err() {
@@ -336,6 +336,6 @@ void loop() {
     delay(1000*CYCLE_TIME - delay_time); // each loop takes CYCLE_TIME ms
   else
     delay(10);
-  delta_t = start_time - millis(); // for odometry bookkeeping purposes
+  delta_t = begin_time - millis(); // for odometry bookkeeping purposes
 }
 
