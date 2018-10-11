@@ -273,8 +273,7 @@ void loop() {
   // transform_us_to_robot_coords
   
   dist = sparki.ping();   // measure the distance 
-  // FIXME Paul thinks that theta here should be pose_servo
-  transform_us_to_robot_coords(dist, theta, &rx, &ry);
+  transform_us_to_robot_coords(dist, pose_servo, &rx, &ry);
   transform_robot_to_world_coords(rx, ry, &wx, &wy);
   if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
     //world_map[obj_i][obj_j] = 1; // TODO uncomment this when we have object detection working
