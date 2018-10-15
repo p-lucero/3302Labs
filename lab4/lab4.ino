@@ -4,6 +4,7 @@
 #define ROBOT_SPEED 0.0278
 #define MIN_CYCLE_TIME .100
 #define AXLE_DIAMETER 0.0865
+
 #define FWD 1
 #define NONE 0
 #define BCK -1
@@ -22,9 +23,7 @@
 
 #define SERVO_POS_DEG 45
 
-//for object finding at ~line 300
-//float objectX = 0.;
-//float objectY = 0.;
+
 
 float rx; // robot frame x
 float ry; // robot frame y
@@ -91,10 +90,9 @@ float to_degrees(float rad) {
 //XI -> FUNCTIONS transfprm_us_to_robot_coords & FUNCTION transform_robot_to_world_coords 
 void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry) {
   
-  //
-  *rx = dist * cos(theta); 
-  *ry = dist * sin(theta); 
-  
+  //Finished 
+  *rx = dist * cos(pose_servo); 
+  *ry = dist * sin(pose_servo);
 }
 //XI -> 
 // Robot coordinates -> World frame coordinates
@@ -102,9 +100,10 @@ void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry)
 //           Q  =    R    *    Q    +    P  
 //                B
 void transform_robot_to_world_coords(float x, float y, float *gx, float *gy) {
-  
-    *gx = cos(pose_theta)x  - sin(pose_theta)y + pose_x ;
-    *gy = sin(pose_theta)x  + cos(pose_theta)y + pose_y; 
+    
+    //Finished: Need double check  
+    *gx = cos(pose_theta)*x  - sin(pose_theta)*y + pose_x;
+    *gy = sin(pose_theta)*x  + cos(pose_theta)*y + pose_y;
   
 }
 //Ian:
@@ -115,7 +114,7 @@ bool transform_xy_to_grid_coords(float x, float y, int *i, int *j) {
   if((x < 0) || (y < 0)){
     return 0; // returns 0 if x or y is boyond paper in negative direction
   }
-  // FINISDE: Set *i and *j to their corresponding grid coords  
+  // FINISHED: Set *i and *j to their corresponding grid coords  
   *i = round((x / CELL_RESOLUTION_X) + .5); // Adding .5 to quotient so that round() always rounds up
   *j = round((y / CELL_RESOLUTION_Y) + .5); // Adding .5 to quotient so that round() always rounds up
   // FINISHED: Return 0 if the X,Y coordinates were out of bounds
@@ -195,7 +194,7 @@ void displayMap() {
   int x0, y0, x1, y1;
 
   // FINISHED: Make sure that if the robot is "off-grid", e.g., at a negative grid position or somewhere outside your grid's max x or y position that you don't try to plot the robot's position!
-  transform_xy_to_grid_coords(pose_x, pose_y, &cur_cell_x, &cur_cell_y))
+  transform_xy_to_grid_coords(pose_x, pose_y, &cur_cell_x, &cur_cell_y);
   
   // FINISHED: Draw Map
   // Quick and dirty but lazy debug printing method
@@ -235,6 +234,34 @@ void displayMap() {
   }
 }
 
+int cell_coords_to_id(int i, int j){
+  return j * NUM_X_CELLS + i;
+}
+
+void cell_id_to_coords(int id, int* i, int* j){
+  *i = id % NUM_X_CELLS;
+  *j = id / NUM_X_CELLS;
+}
+
+int manhattan_distance_heur(int i1, int j1, int i2, int j2){
+  return (abs(i1 - i2) + abs(j1 - j2));
+}
+
+int cost_to_move(int id1, int id2){
+  int i1, i2, j1, j2;
+  cell_id_to_coords(id1, &i1, &j1);
+  cell_id_to_coords(id2, &i2, &j2);
+  if (((abs(i1 - i2) == 1 && j1 - j2 == 0) ||
+      (abs(j1 - j2) == 1 && i1 - i2 == 0)) &&
+     !world_map[i1][j1] && !world_map[i2][j2]){
+    return 1;
+  }else {
+    return 99; 
+  }
+
+} 
+
+
 void serialPrintOdometry() {
   Serial.print("\n\n\nPose: ");
   Serial.print("\nX: ");
@@ -266,8 +293,8 @@ void loop() {
   readSensors();
   
 
-  elapsed_time = (millis() - last_cycle_time) / 1000;
-  updateOdometry(last_cycle_time);
+  elapsed_time = (millis() - last_cycle_time) / 1000.0;
+  updateOdometry(elapsed_time);
   serialPrintOdometry();
   
   // transform_us_to_robot_coords
@@ -276,7 +303,7 @@ void loop() {
   transform_us_to_robot_coords(dist, pose_servo, &rx, &ry);
   transform_robot_to_world_coords(rx, ry, &wx, &wy);
   if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
-    //world_map[obj_i][obj_j] = 1; // TODO uncomment this when we have object detection working
+    world_map[obj_i][obj_j] = 1; // TODO uncomment this when we have object detection working
   }
   
   
@@ -287,22 +314,6 @@ void loop() {
   
   // TODO: Check if sensors found an object
   
-  
-  
-  // objectX & objectY I made on lines 25-27
-  // sensorFindOBject
-  
-  /*
-  objectX = pose_x + (sparki.ping()/sin(theta));
-  objectY = pose_y + sparki.ping()/cos(theta));
-  
-  if(objectX < .6 || objectX > 0){
-    if(objectY < .42 || objectY > 0){
-      //create object coordinates are on map
-      world_map[.62 % objectX][.4 % objectY] = 1;
-    }
-  }
-  */
   
   
   
