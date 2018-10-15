@@ -29,7 +29,7 @@ float wx; // world frame x
 float wy; // world frame y
 int obj_i; // map space
 int obj_j; // map space
-float dist; // sensor distance measurement
+float distance; // sensor distance measurement
 
 // int current_state = 1; // unnecessary allocation?
 const int threshold = 800; // FIXME would changing this to 700 or so fix some line-following problems?
