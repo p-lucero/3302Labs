@@ -1,5 +1,5 @@
 #include <sparki.h>
-#include <math.h> //Included for round()
+#include <math.h> //Included for floor()
 
 #define ROBOT_SPEED 0.0278
 #define MIN_CYCLE_TIME .100
@@ -23,8 +23,6 @@
 
 #define SERVO_POS_DEG 45
 
-
-
 float rx; // robot frame x
 float ry; // robot frame y
 float wx; // world frame x
@@ -32,20 +30,16 @@ float wy; // world frame y
 int obj_i; // map space
 int obj_j; // map space
 float dist; // sensor distance measurement
-float theta = SERVO_POS_DEG; // servo position
 
-int current_state = 1;
-const int threshold = 800;
+// int current_state = 1; // unnecessary allocation?
+const int threshold = 800; // FIXME would changing this to 700 or so fix some line-following problems?
 int line_left = 1000;
 int line_center = 1000;
 int line_right = 1000;
-float distance = 0.;
 unsigned long last_cycle_time = 0;
-
 
 float pose_x = 0., pose_y = 0., pose_theta = 0., pose_servo = 0.;
 int left_wheel_rotating = 0, right_wheel_rotating = 0;
-
 
 // FINISHED: Define world_map multi-dimensional array
 bool world_map[NUM_X_CELLS][NUM_Y_CELLS]; 
@@ -53,7 +47,6 @@ bool world_map[NUM_X_CELLS][NUM_Y_CELLS];
 // FINISHED: Figure out how many meters of space are in each grid cell
 const float CELL_RESOLUTION_X = .6 / NUM_X_CELLS;  // Line following map is ~60cm x ~42cm
 const float CELL_RESOLUTION_Y = .42 / NUM_Y_CELLS; // Line following map is ~60cm x ~42cm
-
 
 void setup() {
   pose_x = START_LINE_X;
@@ -74,6 +67,7 @@ void setup() {
 
   sparki.clearLCD();
   displayMap();
+  sparki.updateLCD(); // Improve responsiveness of map printing
   delay(1000);  
   last_cycle_time = millis();
 }
@@ -91,7 +85,7 @@ float to_degrees(float rad) {
 void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry) {
   
   //Finished 
-  *rx = dist * cos(pose_servo); 
+  *rx = dist * cos(pose_servo);
   *ry = dist * sin(pose_servo);
 }
 //XI -> 
@@ -108,6 +102,7 @@ void transform_robot_to_world_coords(float x, float y, float *gx, float *gy) {
 }
 //Ian:
 bool transform_xy_to_grid_coords(float x, float y, int *i, int *j) {
+  // FINISHED: Return 0 if the X,Y coordinates were out of bounds
   if((x >= .6) || (y >= .42)){
     return 0; // returns 0 if x or y is beyond paper in positive direction
   }
@@ -117,8 +112,6 @@ bool transform_xy_to_grid_coords(float x, float y, int *i, int *j) {
   // FINISHED: Set *i and *j to their corresponding grid coords  
   *i = floor(x / CELL_RESOLUTION_X);
   *j = floor(y / CELL_RESOLUTION_Y);
-  // FINISHED: Return 0 if the X,Y coordinates were out of bounds
-
   return 1;
 }
 
@@ -136,8 +129,6 @@ bool transform_grid_coords_to_xy(int i, int j, float *x, float *y) {
   // FINISHED: Set *x and *y
   *x = (i * CELL_RESOLUTION_X) + (CELL_RESOLUTION_X / 2);
   *y = (j * CELL_RESOLUTION_Y) + (CELL_RESOLUTION_Y / 2);
-
-  
   return 1;
 }
 
@@ -234,6 +225,7 @@ void displayMap() {
   }
 }
 
+// Helper functions for working with Dijkstra's/A* search next lab
 int cell_coords_to_id(int i, int j){
   return j * NUM_X_CELLS + i;
 }
@@ -243,10 +235,12 @@ void cell_id_to_coords(int id, int* i, int* j){
   *j = id / NUM_X_CELLS;
 }
 
+// Only useful if working strictly with A*, because Dijkstra's uses no heuristic
 int manhattan_distance_heur(int i1, int j1, int i2, int j2){
   return (abs(i1 - i2) + abs(j1 - j2));
 }
 
+// Checks if the two cells are adjacent and non-occupied; could be booleanized, but int may be more extensible?
 int cost_to_move(int id1, int id2){
   int i1, i2, j1, j2;
   cell_id_to_coords(id1, &i1, &j1);
@@ -255,12 +249,11 @@ int cost_to_move(int id1, int id2){
       (abs(j1 - j2) == 1 && i1 - i2 == 0)) &&
      !world_map[i1][j1] && !world_map[i2][j2]){
     return 1;
-  }else {
+  }
+  else {
     return 99; 
   }
-
 } 
-
 
 void serialPrintOdometry() {
   Serial.print("\n\n\nPose: ");
@@ -291,33 +284,21 @@ void loop() {
   float elapsed_time;
   bool found_object = 0;
   readSensors();
-  
 
   elapsed_time = (millis() - last_cycle_time) / 1000.0;
   updateOdometry(elapsed_time);
   serialPrintOdometry();
-  
-  // transform_us_to_robot_coords
-  
-  dist = sparki.ping();   // measure the distance 
-  transform_us_to_robot_coords(dist, pose_servo, &rx, &ry);
+
+  // FINISHED: Check if sensors found an object
+  transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
   transform_robot_to_world_coords(rx, ry, &wx, &wy);
   if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
-    world_map[obj_i][obj_j] = 1; // TODO uncomment this when we have object detection working
+    world_map[obj_i][obj_j] = 1; // FIXME is this working?
   }
   
-  
-   
   // Mapping Code
-  //sparki.servo(-to_degrees(pose_servo)); //Commented out - not needed? 
-  // Prevents constant twitching of servo, but may be useful if we change pose_servo at some point. FIXME?
-  
-  // TODO: Check if sensors found an object
-  
-  
-  
-  
-  // TODO: Adjust Map to accommodate new object
+  // Commenting this out prevents servo twitching, but this may be useful later if we want to change pose_servo
+  // sparki.servo(-to_degrees(pose_servo));
   sparki.clearLCD();
   displayMap();
   sparki.updateLCD();
@@ -342,7 +323,7 @@ void loop() {
     pose_theta = 0.;
   } 
 
-  end_time = millis();
+  end_time = millis(); // FIXME way too much delay is happening here, and Sparki's movement changes are extremely slow. Why???
   delay_time = end_time - begin_time;
   if (delay_time < 1000*MIN_CYCLE_TIME)
     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
