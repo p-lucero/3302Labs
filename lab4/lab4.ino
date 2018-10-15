@@ -115,8 +115,8 @@ bool transform_xy_to_grid_coords(float x, float y, int *i, int *j) {
     return 0; // returns 0 if x or y is boyond paper in negative direction
   }
   // FINISHED: Set *i and *j to their corresponding grid coords  
-  *i = round((x / CELL_RESOLUTION_X) + .5); // Adding .5 to quotient so that round() always rounds up
-  *j = round((y / CELL_RESOLUTION_Y) + .5); // Adding .5 to quotient so that round() always rounds up
+  *i = floor(x / CELL_RESOLUTION_X);
+  *j = floor(y / CELL_RESOLUTION_Y);
   // FINISHED: Return 0 if the X,Y coordinates were out of bounds
 
   return 1;
