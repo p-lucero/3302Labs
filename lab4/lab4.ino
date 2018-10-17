@@ -22,17 +22,13 @@
 #define START_LINE_Y .0508 
 
 #define SERVO_POS_DEG 45
+#define M_PI 3.14159
 
-float rx; // robot frame x
-float ry; // robot frame y
-float wx; // world frame x
-float wy; // world frame y
-int obj_i; // map space
-int obj_j; // map space
+#define threshold 700
+
 float distance; // sensor distance measurement
 
 // int current_state = 1; // unnecessary allocation?
-const int threshold = 700;
 int line_left = 1000;
 int line_center = 1000;
 int line_right = 1000;
@@ -61,7 +57,7 @@ void setup() {
   // FINISHED: Initialize world_map
   for (int i = 0; i < NUM_X_CELLS; i++){
     for (int j = 0; j < NUM_Y_CELLS; j++){
-      world_map[i][j] = 1; // everything starts out as unoccupied until otherwise determined
+      world_map[i][j] = true; // everything starts out as unoccupied until otherwise determined
     }
   }
 
@@ -132,6 +128,13 @@ bool transform_grid_coords_to_xy(int i, int j, float *x, float *y) {
   return 1;
 }
 
+float bound_angle(float rad) {
+  // Only check the angle bound once, hoping that it's not outrageously bad.
+  if (rad > M_PI) rad -= 2*M_PI;
+  if (rad < -M_PI) rad += 2*M_PI;
+  return rad;
+}
+
 void readSensors() {
   line_left = sparki.lineLeft();
   line_right = sparki.lineRight();
@@ -173,6 +176,7 @@ void updateOdometry(float cycle_time) {
   pose_x += cos(pose_theta) * cycle_time * ROBOT_SPEED * (left_wheel_rotating + right_wheel_rotating)/2.;
   pose_y += sin(pose_theta) * cycle_time * ROBOT_SPEED * (left_wheel_rotating + right_wheel_rotating)/2.;
   pose_theta += (right_wheel_rotating - left_wheel_rotating) * cycle_time * ROBOT_SPEED / AXLE_DIAMETER;
+  pose_theta = bound_angle(pose_theta);
 }
 
 void displayMap() {
@@ -189,40 +193,40 @@ void displayMap() {
   
   // FINISHED: Draw Map
   // Quick and dirty but lazy debug printing method
-  // for (int i = NUM_X_CELLS - 1; i > 0; i--){
-  //   for (int j = 0; j < NUM_Y_CELLS; j++){
-  //     if (i == cur_cell_x && j == cur_cell_y){
-  //       sparki.print(2);
-  //     }
-  //     else {
-  //       sparki.print(world_map[i][j]); 
-  //     }
-  //     sparki.print(" ");
-  //   }
-  //   sparki.println();
-  // }
-  
-  // more robust printing method that may also break
-  for (int i = 0; i < NUM_X_CELLS; i++){
-    for (int j = 0; j < NUM_Y_CELLS; j++){
-      x0 = PIXELS_PER_X_CELL * i;
-      y0 = MAX_Y_COORD - PIXELS_PER_Y_CELL * (j + 1);
-      x1 = PIXELS_PER_X_CELL * (i + 1);
-      y1 = MAX_Y_COORD - PIXELS_PER_Y_CELL * j;
+  for (int j = NUM_Y_CELLS - 1; j >= 0; j--){
+    for (int i = 0; i < NUM_X_CELLS; i++){
       if (i == cur_cell_x && j == cur_cell_y){
-        // print a sparki as a circle
-        sparki.drawCircle((x0 + x1)/2, (y0 + y1)/2, min(PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL)/2);
+        sparki.print(2);
       }
-      else if (world_map[i][j] == 1){
-        // print an empty space
-        sparki.drawRect(x0, y0, x1, y1);
+      else {
+        sparki.print(world_map[i][j]);
       }
-      else if (world_map[i][j] == 0){
-        // print a filled space
-        sparki.drawRectFilled(x0, y0, x1, y1);
-      }
+      sparki.print(" ");
     }
+    sparki.println();
   }
+    
+  // more robust printing method that may also break
+  // for (int i = 0; i < NUM_X_CELLS; i++){
+  //   for (int j = 0; j < NUM_Y_CELLS; j++){
+  //     x0 = PIXELS_PER_X_CELL * i;
+  //     y0 = MAX_Y_COORD - PIXELS_PER_Y_CELL * (j + 1);
+  //     x1 = PIXELS_PER_X_CELL * (i + 1);
+  //     y1 = MAX_Y_COORD - PIXELS_PER_Y_CELL * j; 
+  //     if (i == cur_cell_x && j == cur_cell_y){
+  //       // print a sparki as a circle
+  //       sparki.drawCircle((x0 + x1)/2, (y0 + y1)/2, min(PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL)/2);
+  //     }
+  //     else if (world_map[i][j] == true){
+  //       // print an empty space
+  //       sparki.drawRect(x0, y0, x1, y1);
+  //     }
+  //     else if (world_map[i][j] == false){
+  //       // print a filled space
+  //       sparki.drawRectFilled(x0, y0, x1, y1);
+  //     }
+  //   }
+  // }
 }
 
 // Helper functions for working with Dijkstra's/A* search next lab
@@ -236,9 +240,9 @@ void cell_id_to_coords(int id, int* i, int* j){
 }
 
 // Only useful if working strictly with A*, because Dijkstra's uses no heuristic
-int manhattan_distance_heur(int i1, int j1, int i2, int j2){
-  return (abs(i1 - i2) + abs(j1 - j2));
-}
+// int manhattan_distance_heur(int i1, int j1, int i2, int j2){
+//   return (abs(i1 - i2) + abs(j1 - j2));
+// }
 
 // Checks if the two cells are adjacent and non-occupied; could be booleanized, but int may be more extensible?
 int cost_to_move(int id1, int id2){
@@ -262,8 +266,19 @@ void serialPrintOdometry() {
   Serial.print("\nY: ");
   Serial.print(pose_y);
   Serial.print("\nT: ");
-  Serial.print(pose_theta * 180. / 3.14159);
+  Serial.print(to_degrees(pose_theta));
   Serial.print("\n");
+}
+
+void serialPrintMap(){
+  for (int i = 0; i < NUM_X_CELLS; i++){
+    for (int j = NUM_Y_CELLS - 1; j >= 0; j--){
+      Serial.print(world_map[i][j]);
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+  Serial.print("\n\n");
 }
 
 void displayOdometry() {
@@ -273,34 +288,48 @@ void displayOdometry() {
   sparki.print("Y: ");
   sparki.println(pose_y);
   sparki.print("T: ");
-  sparki.println(pose_theta * 180. / 3.14159);
+  sparki.println(to_degrees(pose_theta));
+  sparki.print("Ultrasonic: ");
+  sparki.println(distance * 100);
 }
 
 void loop() {
   unsigned long begin_time = millis();
-  unsigned long begin_movement_time = 0;
-  unsigned long end_time = 0;
   unsigned long delay_time = 0;
-  float elapsed_time;
-  bool found_object = 0;
+  float rx; // robot frame x
+  float ry; // robot frame y
+  float wx; // world frame x
+  float wy; // world frame y
+  int obj_i; // map space
+  int obj_j; // map space
+  int sparki_i;
+  int sparki_j;
+  
   readSensors();
 
-  elapsed_time = (millis() - last_cycle_time) / 1000.0;
-  updateOdometry(elapsed_time);
-  // serialPrintOdometry(); // TODO uncomment this once timing issues are worked out.
+  updateOdometry((begin_time - last_cycle_time) / 1000.0);
+  // serialPrintOdometry(); // DON'T USE THIS; MAKES LOOPS TAKE WAAAAY TOO LONG!!
 
   // FINISHED: Check if sensors found an object
-  transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
-  transform_robot_to_world_coords(rx, ry, &wx, &wy);
-  if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
-    world_map[obj_i][obj_j] = 0; // FIXME is this working?
+  transform_xy_to_grid_coords(pose_x, pose_y, &sparki_i, &sparki_j);
+  if(distance <= .3 && distance > 0){
+    transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
+    transform_robot_to_world_coords(rx, ry, &wx, &wy);
+    if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
+      if (sparki_i != obj_i && sparki_j != obj_j){
+        world_map[obj_i][obj_j] = false;
+      }
+    }
   }
+  
+  serialPrintMap();
   
   // Mapping Code
   // Commenting this out prevents servo twitching, but this may be useful later if we want to change pose_servo
   // sparki.servo(-to_degrees(pose_servo));
   sparki.clearLCD();
   displayMap();
+  // displayOdometry();
   sparki.updateLCD();
 
   if (line_center < threshold) {
@@ -310,9 +339,8 @@ void loop() {
   } else if (line_right < threshold) {
     moveRight();
   } else {
-    moveStop();
+    // moveStop();
   }
-  last_cycle_time = millis(); // Start timer for last motor command to determine cycle time
   
   // Check for start line, use as loop closure
   // NOTE: Assumes robot is moving counter-clockwise around the map (by setting pose_theta = 0)!
@@ -321,22 +349,15 @@ void loop() {
     pose_x = START_LINE_X;
     pose_y = START_LINE_Y;
     pose_theta = 0.;
-  } 
-
-  end_time = millis(); // FIXME way too much delay is happening here, and Sparki's movement changes are extremely slow. Why???
-  delay_time = end_time - begin_time;
-
-  // some debug code to investigate why timing is so weird
-  Serial.print("Time at start is ");
-  Serial.print(begin_time);
-  Serial.print(", time at end is ");
-  Serial.print(end_time);
-  Serial.print(", delaying for ");
-  Serial.println(delay_time < 1000 * MIN_CYCLE_TIME ? 1000 * MIN_CYCLE_TIME - delay_time : 10);
+  }
+  
+  // last_cycle_time = millis(); // Start timer for last motor command to determine cycle time
+  delay_time = millis() - begin_time;
 
   // actually perform timing changes
   if (delay_time < 1000*MIN_CYCLE_TIME)
     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
   else
     delay(10);
+  last_cycle_time = begin_time;
 }
