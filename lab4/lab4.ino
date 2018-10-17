@@ -186,47 +186,49 @@ void displayMap() {
   const int MAX_X_COORD = PIXELS_PER_X_CELL * NUM_X_CELLS;
   const int MAX_Y_COORD = PIXELS_PER_Y_CELL * NUM_Y_CELLS;
   int cur_cell_x=-1, cur_cell_y=-1;
-  int x0, y0, x1, y1;
+  int x0, y0, x1, y1, xc, yc;
 
   // FINISHED: Make sure that if the robot is "off-grid", e.g., at a negative grid position or somewhere outside your grid's max x or y position that you don't try to plot the robot's position!
   transform_xy_to_grid_coords(pose_x, pose_y, &cur_cell_x, &cur_cell_y);
   
   // FINISHED: Draw Map
   // Quick and dirty but lazy debug printing method
-  for (int j = NUM_Y_CELLS - 1; j >= 0; j--){
-    for (int i = 0; i < NUM_X_CELLS; i++){
-      if (i == cur_cell_x && j == cur_cell_y){
-        sparki.print(2);
-      }
-      else {
-        sparki.print(world_map[i][j]);
-      }
-      sparki.print(" ");
-    }
-    sparki.println();
-  }
+  // for (int j = NUM_Y_CELLS - 1; j >= 0; j--){
+  //   for (int i = 0; i < NUM_X_CELLS; i++){
+  //     if (i == cur_cell_x && j == cur_cell_y){
+  //       sparki.print(2);
+  //     }
+  //     else {
+  //       sparki.print(world_map[i][j]);
+  //     }
+  //     sparki.print(" ");
+  //   }
+  //   sparki.println();
+  // }
     
   // more robust printing method that may also break
-  // for (int i = 0; i < NUM_X_CELLS; i++){
-  //   for (int j = 0; j < NUM_Y_CELLS; j++){
-  //     x0 = PIXELS_PER_X_CELL * i;
-  //     y0 = MAX_Y_COORD - PIXELS_PER_Y_CELL * (j + 1);
-  //     x1 = PIXELS_PER_X_CELL * (i + 1);
-  //     y1 = MAX_Y_COORD - PIXELS_PER_Y_CELL * j; 
-  //     if (i == cur_cell_x && j == cur_cell_y){
-  //       // print a sparki as a circle
-  //       sparki.drawCircle((x0 + x1)/2, (y0 + y1)/2, min(PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL)/2);
-  //     }
-  //     else if (world_map[i][j] == true){
-  //       // print an empty space
-  //       sparki.drawRect(x0, y0, x1, y1);
-  //     }
-  //     else if (world_map[i][j] == false){
-  //       // print a filled space
-  //       sparki.drawRectFilled(x0, y0, x1, y1);
-  //     }
-  //   }
-  // }
+  for (int i = 0; i < NUM_X_CELLS; i++){
+    for (int j = 0; j < NUM_Y_CELLS; j++){
+      x0 = PIXELS_PER_X_CELL * i;
+      y0 = MAX_Y_COORD - PIXELS_PER_Y_CELL * (j + 1);
+      x1 = PIXELS_PER_X_CELL * (i + 1);
+      y1 = MAX_Y_COORD - PIXELS_PER_Y_CELL * j;
+      xc = (x0 + x1)/2;
+      yc = (y0 + y1)/2;
+      if (i == cur_cell_x && j == cur_cell_y){
+        // print a sparki as a circle
+        sparki.drawCircle(xc, yc, min(PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL)/2);
+      }
+      else if (world_map[i][j] == true){
+        // print an empty space
+        sparki.drawRect(xc, yc, PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL);
+      }
+      else if (world_map[i][j] == false){
+        // print a filled space
+        sparki.drawRectFilled(xc, yc, PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL);
+      }
+    }
+  }
 }
 
 // Helper functions for working with Dijkstra's/A* search next lab
