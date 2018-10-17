@@ -61,7 +61,7 @@ void setup() {
   // FINISHED: Initialize world_map
   for (int i = 0; i < NUM_X_CELLS; i++){
     for (int j = 0; j < NUM_Y_CELLS; j++){
-      world_map[i][j] = 0; // everything starts out as unoccupied until otherwise determined
+      world_map[i][j] = 1; // everything starts out as unoccupied until otherwise determined
     }
   }
 
@@ -213,11 +213,11 @@ void displayMap() {
         // print a sparki as a circle
         sparki.drawCircle((x0 + x1)/2, (y0 + y1)/2, min(PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL)/2);
       }
-      else if (world_map[i][j] == 0){
+      else if (world_map[i][j] == 1){
         // print an empty space
         sparki.drawRect(x0, y0, x1, y1);
       }
-      else if (world_map[i][j] == 1){
+      else if (world_map[i][j] == 0){
         // print a filled space
         sparki.drawRectFilled(x0, y0, x1, y1);
       }
@@ -247,7 +247,7 @@ int cost_to_move(int id1, int id2){
   cell_id_to_coords(id2, &i2, &j2);
   if (((abs(i1 - i2) == 1 && j1 - j2 == 0) ||
       (abs(j1 - j2) == 1 && i1 - i2 == 0)) &&
-     !world_map[i1][j1] && !world_map[i2][j2]){
+     world_map[i1][j1] && world_map[i2][j2]){
     return 1;
   }
   else {
@@ -293,7 +293,7 @@ void loop() {
   transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
   transform_robot_to_world_coords(rx, ry, &wx, &wy);
   if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
-    world_map[obj_i][obj_j] = 1; // FIXME is this working?
+    world_map[obj_i][obj_j] = 0; // FIXME is this working?
   }
   
   // Mapping Code
