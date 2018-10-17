@@ -1,10 +1,12 @@
 #include <sparki.h>
 #include <math.h> //Included for floor()
 
+// Sparki physical constants
 #define ROBOT_SPEED 0.0278
 #define MIN_CYCLE_TIME .100
 #define AXLE_DIAMETER 0.0865
 
+// Wheel rotation states
 #define FWD 1
 #define NONE 0
 #define BCK -1
@@ -24,16 +26,18 @@
 #define SERVO_POS_DEG 45
 #define M_PI 3.14159
 
+// value that we determine to be "significant" for IR sensors as a line
 #define threshold 700
 
-float distance; // sensor distance measurement
-
 // int current_state = 1; // unnecessary allocation?
+// Sensor data storage
 int line_left = 1000;
 int line_center = 1000;
 int line_right = 1000;
+float distance; // sensor distance measurement
 unsigned long last_cycle_time = 0;
 
+// Sparki's current state of motion/position
 float pose_x = 0., pose_y = 0., pose_theta = 0., pose_servo = 0.;
 int left_wheel_rotating = 0, right_wheel_rotating = 0;
 
@@ -45,6 +49,7 @@ const float CELL_RESOLUTION_X = .6 / NUM_X_CELLS;  // Line following map is ~60c
 const float CELL_RESOLUTION_Y = .42 / NUM_Y_CELLS; // Line following map is ~60cm x ~42cm
 
 void setup() {
+  // Set Sparki's initial state
   pose_x = START_LINE_X;
   pose_y = START_LINE_Y;
   pose_theta = 0.;
@@ -68,6 +73,7 @@ void setup() {
   last_cycle_time = millis();
 }
 
+// Helper unit conversion functions for degrees <==> radians
 float to_radians(float deg) {
   return deg * 3.14159 / 180.;
 }
@@ -181,7 +187,7 @@ void updateOdometry(float cycle_time) {
 
 void displayMap() {
   // FINISHED: Measure how many pixels will be taken by each grid cell
-  const int PIXELS_PER_X_CELL = int(SCREEN_X_RES/NUM_X_CELLS);
+  const int PIXELS_PER_X_CELL = int(SCREEN_X_RES/NUM_X_CELLS); // FIXME can also make these defines or something if that's cleaner & more performant
   const int PIXELS_PER_Y_CELL = int(SCREEN_Y_RES/NUM_Y_CELLS); 
   const int MAX_X_COORD = PIXELS_PER_X_CELL * NUM_X_CELLS;
   const int MAX_Y_COORD = PIXELS_PER_Y_CELL * NUM_Y_CELLS;
@@ -273,6 +279,7 @@ void serialPrintOdometry() {
 }
 
 void serialPrintMap(){
+  Serial.print("\n\n");
   for (int i = 0; i < NUM_X_CELLS; i++){
     for (int j = NUM_Y_CELLS - 1; j >= 0; j--){
       Serial.print(world_map[i][j]);
@@ -280,7 +287,6 @@ void serialPrintMap(){
     }
     Serial.println();
   }
-  Serial.print("\n\n");
 }
 
 void displayOdometry() {
@@ -314,6 +320,7 @@ void loop() {
 
   // FINISHED: Check if sensors found an object
   transform_xy_to_grid_coords(pose_x, pose_y, &sparki_i, &sparki_j);
+  // FIXME should this be changed at some point since we might see objects that are further away?
   if(distance <= .3 && distance > 0){
     transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
     transform_robot_to_world_coords(rx, ry, &wx, &wy);
@@ -324,12 +331,13 @@ void loop() {
     }
   }
   
-  serialPrintMap();
+  serialPrintMap(); // TODO comment me out for performance reasons when we're sure that map printing is working
   
   // Mapping Code
   // Commenting this out prevents servo twitching, but this may be useful later if we want to change pose_servo
   // sparki.servo(-to_degrees(pose_servo));
   sparki.clearLCD();
+  // Choose whatever you want to print to the screen
   displayMap();
   // displayOdometry();
   sparki.updateLCD();
@@ -340,26 +348,26 @@ void loop() {
     moveLeft();
   } else if (line_right < threshold) {
     moveRight();
-  } else {
-    // moveStop();
   }
   
   // Check for start line, use as loop closure
   // NOTE: Assumes robot is moving counter-clockwise around the map (by setting pose_theta = 0)!
   //       If your robot is moving clockwise, set pose_theta to pi radians (i.e., pointing left).
+  // This should occur independent of whatever movement we're currently performing
+  // but could also set moveForward() if we end up just turning infinitely on the start line?
+  // Unlikely bot possible...
   if (line_left < threshold && line_right < threshold && line_center < threshold) {
     pose_x = START_LINE_X;
     pose_y = START_LINE_Y;
     pose_theta = 0.;
   }
   
-  // last_cycle_time = millis(); // Start timer for last motor command to determine cycle time
-  delay_time = millis() - begin_time;
+  delay_time = millis() - begin_time; // total time that the logic of the loop took
 
   // actually perform timing changes
   if (delay_time < 1000*MIN_CYCLE_TIME)
     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
   else
     delay(10);
-  last_cycle_time = begin_time;
+  last_cycle_time = begin_time; // Ensure that we use the right value for the next loop, which was the beginning of this loop
 }
