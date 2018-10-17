@@ -32,7 +32,7 @@ int obj_j; // map space
 float distance; // sensor distance measurement
 
 // int current_state = 1; // unnecessary allocation?
-const int threshold = 800; // FIXME would changing this to 700 or so fix some line-following problems?
+const int threshold = 700;
 int line_left = 1000;
 int line_center = 1000;
 int line_right = 1000;
@@ -287,7 +287,7 @@ void loop() {
 
   elapsed_time = (millis() - last_cycle_time) / 1000.0;
   updateOdometry(elapsed_time);
-  serialPrintOdometry();
+  // serialPrintOdometry(); // TODO uncomment this once timing issues are worked out.
 
   // FINISHED: Check if sensors found an object
   transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
@@ -325,6 +325,16 @@ void loop() {
 
   end_time = millis(); // FIXME way too much delay is happening here, and Sparki's movement changes are extremely slow. Why???
   delay_time = end_time - begin_time;
+
+  // some debug code to investigate why timing is so weird
+  Serial.print("Time at start is ");
+  Serial.print(begin_time);
+  Serial.print(", time at end is ");
+  Serial.print(end_time);
+  Serial.print(", delaying for ");
+  Serial.println(delay_time < 1000 * MIN_CYCLE_TIME ? 1000 * MIN_CYCLE_TIME - delay_time : 10);
+
+  // actually perform timing changes
   if (delay_time < 1000*MIN_CYCLE_TIME)
     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
   else
