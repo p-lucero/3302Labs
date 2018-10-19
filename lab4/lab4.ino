@@ -227,11 +227,11 @@ void displayMap() {
       }
       else if (world_map[i][j] == true){
         // print an empty space
-        sparki.drawRect(xc, yc, PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL);
+        sparki.drawRect(x0, y0, PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL);
       }
       else if (world_map[i][j] == false){
         // print a filled space
-        sparki.drawRectFilled(xc, yc, PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL);
+        sparki.drawRectFilled(x0, y0, PIXELS_PER_X_CELL, PIXELS_PER_Y_CELL);
       }
     }
   }
@@ -325,7 +325,7 @@ void loop() {
     transform_us_to_robot_coords(distance, pose_servo, &rx, &ry); // Use the value calculated in readSensors, rather than reinventing the wheel
     transform_robot_to_world_coords(rx, ry, &wx, &wy);
     if(transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j)){
-      if (sparki_i != obj_i && sparki_j != obj_j){
+      if (sparki_i != obj_i || sparki_j != obj_j){
         world_map[obj_i][obj_j] = false;
       }
     }
