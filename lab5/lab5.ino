@@ -196,14 +196,20 @@ int *run_dijkstra(int source_vertex) {
       }
       neighbor_i = i + delta_i;
       neighbor_j = j + delta_j;     
-      // if (neighbor_i < 0 || neighbor_i >= NUM_X_CELLS || neighbor_j < 0 || neighbor_j >= NUM_Y_CELLS){
-      //   continue;
-      // } // This shouldn't be necessary, since get_travel_cost should do this for us, but uncomment this if weird things start happening
+      if (neighbor_i < 0 || neighbor_i >= NUM_X_CELLS || neighbor_j < 0 || neighbor_j >= NUM_Y_CELLS){
+        continue;
+      } // This is very necessary to avoid array accesses out of bounds
       neighbor = ij_coordinates_to_vertex_index(neighbor_i, neighbor_j);
       alt = dist[u] + get_travel_cost(u, neighbor);
       if (alt < dist[neighbor]){
         dist[neighbor] = alt;
         prev[neighbor] = u;
+<<<<<<< Updated upstream
+=======
+        // if (Q_cost[neighbor] != -1){
+        //   Q_cost[neighbor] = alt;
+        // } // currently broken
+>>>>>>> Stashed changes
       }
     }
   }
