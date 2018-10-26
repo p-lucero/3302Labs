@@ -68,7 +68,9 @@ bool is_empty(int *arr, int len) {
 int get_min_index(int *arr, int len) {
   int min_val=-1, min_idx=-1;
   for (int i=0;i < len; ++i) {
-    if ((arr[i] < min_val && arr[i] != -1) || min_val == -1) {
+    // If the element is less than the minimum value and is not invalid OR
+    // the element is more than the minimum value and we have no valid minimum value
+    if ((arr[i] < min_val && arr[i] != -1) || (arr[i] > min_val && min_val == -1)) {
       min_val = arr[i];
       min_idx = i;
     }
