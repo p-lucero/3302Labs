@@ -204,12 +204,9 @@ int *run_dijkstra(int source_vertex) {
       if (alt < dist[neighbor]){
         dist[neighbor] = alt;
         prev[neighbor] = u;
-<<<<<<< Updated upstream
-=======
         // if (Q_cost[neighbor] != -1){
         //   Q_cost[neighbor] = alt;
         // } // currently broken
->>>>>>> Stashed changes
       }
     }
   }
