@@ -68,7 +68,7 @@ bool is_empty(int *arr, int len) {
 int get_min_index(int *arr, int len) {
   int min_val=-1, min_idx=-1;
   for (int i=0;i < len; ++i) {
-    if (arr[i] < min_val || min_val == -1) {
+    if ((arr[i] < min_val && arr[i] != -1) || min_val == -1) {
       min_val = arr[i];
       min_idx = i;
     }
@@ -204,9 +204,9 @@ int *run_dijkstra(int source_vertex) {
       if (alt < dist[neighbor]){
         dist[neighbor] = alt;
         prev[neighbor] = u;
-        // if (Q_cost[neighbor] != -1){
-        //   Q_cost[neighbor] = alt;
-        // } // currently broken
+        if (Q_cost[neighbor] != -1){
+          Q_cost[neighbor] = alt;
+        }
       }
     }
   }
