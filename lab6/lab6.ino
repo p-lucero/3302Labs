@@ -18,6 +18,11 @@
 #define INITIAL_GOAL_STATE_I 2
 #define INITIAL_GOAL_STATE_J 1
 
+#define STATE_START 1
+#define STATE_HAS_PATH 2
+#define STATE_SEEKING_POSE 3
+#define STATE_FINISHED 4
+#define STATE_NO_PATH 5
 
 // Number of vertices to discretize the map
 #define NUM_X_CELLS 4
@@ -30,7 +35,7 @@
 #define BIG_NUMBER 255
 
 short prev_holder[NUM_X_CELLS*NUM_Y_CELLS];
-
+int current_state;
 
 // IK/Odometry Variables
 float pose_x = 0., pose_y = 0., pose_theta = 0.;
@@ -76,6 +81,7 @@ void setup() {
       world_map[j][i] = 1;
     }
   }
+  current_state = STATE_START;
   world_map[0][1] = 0; // Example of setup code to indicate an obstacle at grid position (0,1)
   program_start_time = millis();
 }
@@ -218,6 +224,21 @@ int get_min_index(short *arr, int len) {
   return min_idx;
 }
 
+// A different version of get_min_index that probably works better
+// Needs a few typing changes but is what we've been using before
+// int get_min_index(int *arr, int len) {
+//   int min_val=-1, min_idx=-1;
+//   for (int i=0;i < len; ++i) {
+//     // If the element is less than the minimum value and is not invalid OR
+//     // the element is more than the minimum value and we have no valid minimum value
+//     if ((arr[i] < min_val && arr[i] != -1) || (arr[i] > min_val && min_val == -1)) {
+//       min_val = arr[i];
+//       min_idx = i;
+//     }
+//   }
+//   return min_idx;
+// }
+
 
 /**********************************
  * Coordinate Transform Functions *
@@ -274,8 +295,10 @@ byte get_travel_cost(int vertex_source, int vertex_dest) {
 
   are_neighboring = (abs(s_i - d_i) + abs(s_j - d_j) <= 1); // 4-Connected world
 
-  // TODO: Add your code to incorporate world_map here
-
+  // FINISHED: Add your code to incorporate world_map here
+  
+  if (!world_map[s_i][s_j] || !world_map[d_i][d_j]) return BIG_NUMBER;
+  
   if (are_neighboring)
     return 1;
   else
@@ -354,6 +377,7 @@ short *reconstruct_path(short *prev, int source_vertex, int dest_vertex) {
 
 
 
+
 void displayOdometry() {
   sparki.clearLCD();
   sparki.print("X: ");
@@ -376,41 +400,150 @@ void displayOdometry() {
   sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
   sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
   sparki.print("h: "); sparki.println(to_degrees(h_err));  
-  sparki.updateLCD();
+  sparki.print("s: "); sparki.println(current_state);
+  // sparki.updateLCD();
 }
 
 void loop () {
+  sparki.clearLCD();
   unsigned long begin_time = millis();
   unsigned long end_time = 0;
+  int sparki_i, sparki_j, sparki_idx;
+  int path_iter = 0, next_vertex, next_next_vertex, dest_i, dest_j;
+  bool sparki_in_grid;
 
   updateOdometry();
   displayOdometry();
   // Your code should work with this test uncommented!
-  /*
+  
   if (millis() - program_start_time > 15000 && goal_i != 0 && goal_j != 0) {
     // After 15 seconds of operation, set the goal vertex to 0,0!
     goal_i = 0; goal_j = 0;    
-    goal_changed = TRUE;
+    goal_changed = true;
   }
-  */
-
+  
+  sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   /****************************************/
   // Implement your state machine here    //
   // in place of the example code         //
   /****************************************/
+  
+  switch(current_state){
+    case STATE_START:
+      if (path != NULL){
+        delete path;
+      }
+      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j));
+      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), ij_coordinates_to_vertex_index(goal_i, goal_j));
+      goal_changed = false;
+      // check for degenerate situation in which there is no path from start to end
+      if (path[1] == -1){ // FIXME? this may not be right
+        if (ij_coordinates_to_vertex_index(sparki_i, sparki_j) != ij_coordinates_to_vertex_index(dest_i, dest_j)){
+          // no path found
+          current_state = STATE_NO_PATH;
+        }
+        else {
+          // the source and destination are the same, so we can just declare that we're done right away
+          current_state = STATE_FINISHED;
+        }
+      }
+      else {
+        current_state = STATE_HAS_PATH;
+      }
+      break;
+    case STATE_HAS_PATH:
+      if (goal_changed){
+        current_state = STATE_START;
+      }
+      if (sparki_in_grid){
+        // perform navigation normally 
+        sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
+        // this for loop intentionally left blank
+        for (path_iter; path[path_iter] != -1 && path[path_iter] != sparki_idx; path_iter++){}
+        if (path[path_iter] == -1){
+          sparki.print("Sparki gets to blind spot \n"); 
+          moveStop();
+        }
+        else {
+          path_iter++;  
+          next_vertex = path[path_iter];
+          if (next_vertex == -1){
+            current_state = STATE_FINISHED;
+            moveStop();
+          }
+          else {
+            vertex_index_to_ij_coordinates(next_vertex, &dest_i, &dest_j);
+            ij_coordinates_to_xy_coordinates(dest_i, dest_j, &dest_pose_x, &dest_pose_y);
+            next_next_vertex = path[path_iter+1];
+            if (next_next_vertex == -1){
+              dest_pose_theta = 0; // or a default value, who cares
+            }
+            else {
+              if (next_next_vertex - next_vertex == NUM_X_CELLS) dest_pose_theta = M_PI / 2;
+              else if (next_next_vertex - next_vertex == -NUM_X_CELLS) dest_pose_theta = -M_PI / 2;
+              else if (next_next_vertex - next_vertex == 1) dest_pose_theta = 0;
+              else if (next_next_vertex - next_vertex == -1) dest_pose_theta = M_PI;
+              else {
+                dest_pose_theta = 0;
+                Serial.println("Invalid value for next and nextnext?");
+                Serial.print("Values are ");
+                Serial.print(next_vertex);
+                Serial.print(" and ");
+                Serial.print(next_next_vertex);
+                Serial.print(", respectively");
+              };
+            }
+       
+            current_state = STATE_SEEKING_POSE;
+          }
+        }
+      }
+      else {
+        // TODO sparki isn't in the grid; find a way to get him back???
+        current_state = STATE_NO_PATH;
+      }
+      break;
+    case STATE_SEEKING_POSE:
+      if (goal_changed){
+        current_state = STATE_START;
+      }
+      compute_IK_errors();
+      compute_IK_wheel_rotations();
+      if (is_robot_at_IK_destination_pose()){
+        moveStop();
+        current_state = STATE_HAS_PATH; 
+      }
+      else{
+        set_IK_motor_rotations();
+      }     
+      break;
+    case STATE_FINISHED:
+      // TODO print something to the screen or have a party or whatever who cares
+      if (path != NULL){
+        delete path;
+        path = NULL;
+      }
+      break;
+    case STATE_NO_PATH:
+      if (goal_changed){
+        current_state = STATE_START;
+      }
+      break;
+  }
+  sparki.updateLCD();
 
   // Example code to use IK //
-  compute_IK_errors();
-  compute_IK_wheel_rotations();
-  set_IK_motor_rotations();
-  if (is_robot_at_IK_destination_pose()) {
-    moveStop();
-  }
+  // compute_IK_errors();
+  // compute_IK_wheel_rotations();
+  // set_IK_motor_rotations();
+  // if (is_robot_at_IK_destination_pose()) {
+  //   moveStop();
+  // }
   ///////////////////////////
 
   // Example code to retrieve a path from Dijkstra //
-  prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); 
-  path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), ij_coordinates_to_vertex_index(goal_i, goal_j));
+  // prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); 
+  // path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), ij_coordinates_to_vertex_index(goal_i, goal_j));
 
   // TODO: Do something with path here instead of just displaying it!
   /*
@@ -424,7 +557,7 @@ void loop () {
   sparki.println(" DONE! "); 
   sparki.updateLCD();
   */
-  delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
+  //delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
  
   ///////////////////////////////////////////////////  
  
@@ -434,4 +567,3 @@ void loop () {
   else
     delay(10); // Accept some error
 }
-
