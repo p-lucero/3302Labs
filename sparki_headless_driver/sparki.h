@@ -1,4 +1,22 @@
 #include <sys/time.h>
+#include <cstddef>
+#include <cstdlib>
+#include <stdio.h>
+#include <math.h>
+#include <unistd.h>
+
+#ifndef SPARKI_HEADLESS
+#define SPARKI_HEADLESS 0
+
+// defines for left and right motors
+typedef unsigned char byte;
+#define MOTOR_LEFT    0
+#define MOTOR_RIGHT   1
+#define MOTOR_GRIPPER 2
+
+// defines for direction
+#define DIR_CCW -1
+#define DIR_CW   1
 
 class Sparki {
 public:
@@ -8,8 +26,26 @@ public:
 	void print(const char* s){printf("%s", s);}
 	void println(const char* s){printf("%s\n", s);}
 
+	void print(char i){printf("%c", i);}
+	void println(char i){printf("%c\n", i);}
+
+	void print(unsigned char i){printf("%hhu", i);}
+	void println(unsigned char i){printf("%hhu\n", i);}
+
 	void print(int i){printf("%d", i);}
-	void println(int i){printf("%d", i);}
+	void println(int i){printf("%d\n", i);}
+
+	void print(unsigned int i){printf("%u", i);}
+	void println(unsigned int i){printf("%u\n", i);}
+
+	void print(long i){printf("%ld", i);}
+	void println(long i){printf("%ld\n", i);}
+
+	void print(unsigned long i){printf("%lu", i);}
+	void println(unsigned long i){printf("%lu\n", i);}
+
+	void print(double i){printf("%f", i);}
+	void println(double i){printf("%f\n", i);}
 
 	float accelX(){return 0;}
 	float accelY(){return 0;}
@@ -69,8 +105,26 @@ public:
 	void print(const char* s){fprintf(stderr, "%s", s);}
 	void println(const char* s){fprintf(stderr, "%s\n", s);}
 
+	void print(char i){fprintf(stderr, "%c", i);}
+	void println(char i){fprintf(stderr, "%c\n", i);}
+
+	void print(unsigned char i){fprintf(stderr, "%hhu", i);}
+	void println(unsigned char i){fprintf(stderr, "%hhu\n", i);}
+
 	void print(int i){fprintf(stderr, "%d", i);}
 	void println(int i){fprintf(stderr, "%d\n", i);}
+
+	void print(unsigned int i){fprintf(stderr, "%u", i);}
+	void println(unsigned int i){fprintf(stderr, "%u\n", i);}
+
+	void print(long i){fprintf(stderr, "%ld", i);}
+	void println(long i){fprintf(stderr, "%ld\n", i);}
+
+	void print(unsigned long i){fprintf(stderr, "%lu", i);}
+	void println(unsigned long i){fprintf(stderr, "%lu\n", i);}
+
+	void print(double i){fprintf(stderr, "%f", i);}
+	void println(double i){fprintf(stderr, "%f\n", i);}
 };
 
 void delay(int ms){
@@ -87,3 +141,7 @@ unsigned long millis(){
     (unsigned long long)(tv.tv_usec) / 1000;
 	return millisecondsSinceEpoch;
 }
+
+Sparki sparki;
+serial Serial; // aaaaaaaaaaaaaa
+#endif
