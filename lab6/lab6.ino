@@ -1,4 +1,5 @@
-#include <sparki.h>
+#include <sparki.h> 
+
 #define TRUE 1
 #define FALSE 0
 
@@ -9,7 +10,9 @@
 #define ROBOT_SPEED 0.0278
 #define CYCLE_TIME .100
 #define AXLE_DIAMETER 0.0865
+#ifndef M_PI // Avoids headless driver file throwing up warnings due to math.h definition
 #define M_PI 3.14159
+#endif
 #define WHEEL_RADIUS 0.03
 #define FWD 1
 #define NONE 0
@@ -34,6 +37,15 @@
 
 #define BIG_NUMBER 255
 
+// Allows for compilation under headless driver file, hopefully avoids breaking anything here
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+
+#ifndef max
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
+
 short prev_holder[NUM_X_CELLS*NUM_Y_CELLS];
 int current_state;
 
@@ -49,9 +61,6 @@ int left_dir = DIR_CCW;
 int right_dir = DIR_CW;
 int left_wheel_rotating = NONE;
 int right_wheel_rotating = NONE;
-
-//float dX  = 0., dTheta = 0.;
-
 
 bool world_map[NUM_Y_CELLS][NUM_X_CELLS];
 // Example source/dest pair: Move from (0,0) to (2,1)
@@ -123,7 +132,6 @@ void updateOdometry() {
  * Core IK Functions         *
  *****************************/
 
- 
 void moveStop() {
   left_wheel_rotating = NONE;
   right_wheel_rotating = NONE;
@@ -148,12 +156,11 @@ void compute_IK_wheel_rotations() {
   float dTheta, dX;
   if (d_err > DISTANCE_MARGIN) { // Get reasonably close before considering heading error
     dTheta = b_err;
+    dX  = 0.1 * min(M_PI, d_err); // De-prioritize distance error to help avoid paths through unintended grid cells
   } else {
     dTheta = h_err;
     dX = 0.; // Force 0-update for dX since we're supposedly at the goal position anyway
-  }  
-
-  dX  = 0.1 * min(M_PI, d_err); // De-prioritize distance error to help avoid paths through unintended grid cells
+  }
   
   phi_l = (dX  - (dTheta*AXLE_DIAMETER/2.)) / WHEEL_RADIUS;
   phi_r = (dX  + (dTheta*AXLE_DIAMETER/2.)) / WHEEL_RADIUS;
@@ -166,10 +173,12 @@ void set_IK_motor_rotations() {
   right_speed_pct = abs(phi_r) / wheel_rotation_normalizer;
 
   // Figure out which direction the wheels need to rotate
-  if (phi_l <= -to_radians(1)) {
+  // FIXME should these zeroes be +-to_radians(1) instead? - Paul
+  // this seems more logical and probably works better but I'm not sure; they had the above initially, but I don't get why
+  if (phi_l < 0) {
     left_dir = DIR_CW;
     left_wheel_rotating = BCK;
-  } else if (phi_l >= to_radians(1)) {
+  } else if (phi_l > 0) {
     left_dir = DIR_CCW;
     left_wheel_rotating = FWD;
   } else {
@@ -177,10 +186,10 @@ void set_IK_motor_rotations() {
     left_wheel_rotating = 0;
   }
 
-  if (phi_r <= -to_radians(1)) {
+  if (phi_r < 0) {
     right_dir = DIR_CCW;
     right_wheel_rotating = BCK;
-  } else if (phi_r >= to_radians(1)) {
+  } else if (phi_r > 0) {
     right_dir = DIR_CW;
     right_wheel_rotating = FWD;
   } else {
@@ -195,8 +204,6 @@ void set_IK_motor_rotations() {
 bool is_robot_at_IK_destination_pose() {
   return (d_err <= DISTANCE_MARGIN && abs(h_err) < HEADING_MARGIN);
 }
-
-
 
 /*****************************
  * Dijkstra Helper Functions *
@@ -223,22 +230,6 @@ int get_min_index(short *arr, int len) {
   if (arr[min_idx] == -1) return -1; 
   return min_idx;
 }
-
-// A different version of get_min_index that probably works better
-// Needs a few typing changes but is what we've been using before
-// int get_min_index(int *arr, int len) {
-//   int min_val=-1, min_idx=-1;
-//   for (int i=0;i < len; ++i) {
-//     // If the element is less than the minimum value and is not invalid OR
-//     // the element is more than the minimum value and we have no valid minimum value
-//     if ((arr[i] < min_val && arr[i] != -1) || (arr[i] > min_val && min_val == -1)) {
-//       min_val = arr[i];
-//       min_idx = i;
-//     }
-//   }
-//   return min_idx;
-// }
-
 
 /**********************************
  * Coordinate Transform Functions *
@@ -373,35 +364,16 @@ short *reconstruct_path(short *prev, int source_vertex, int dest_vertex) {
   return final_path;
 }
 
-
-
-
-
-
 void displayOdometry() {
-  sparki.clearLCD();
-  sparki.print("X: ");
-  sparki.print(pose_x);
-  sparki.print(" Xg: ");
-  sparki.println(dest_pose_x);
-  sparki.print("Y: ");
-  sparki.print(pose_y);
-  sparki.print(" Yg: ");
-  sparki.println(dest_pose_y); 
-  sparki.print("T: ");
-  sparki.print(pose_theta*180./M_PI);
-  sparki.print(" Tg: ");
-  sparki.println(dest_pose_theta*180./M_PI);
+  sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
+  sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
+  sparki.print("T: "); sparki.print(pose_theta*180./M_PI); sparki.print(" Tg: "); sparki.println(dest_pose_theta*180./M_PI);
 
-//  sparki.print("dX : ");
-//  sparki.print(dX );
-//  sparki.print("   dT: ");
-//  sparki.println(dTheta);
+//  sparki.print("dX : "); sparki.print(dX ); sparki.print("   dT: "); sparki.println(dTheta);
   sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
   sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
   sparki.print("h: "); sparki.println(to_degrees(h_err));  
   sparki.print("s: "); sparki.println(current_state);
-  // sparki.updateLCD();
 }
 
 void loop () {
@@ -414,32 +386,34 @@ void loop () {
 
   updateOdometry();
   displayOdometry();
+
   // Your code should work with this test uncommented!
-  
+  // TODO tweak this a little bit so that we can reasonably get to the original goal before changing it?
   if (millis() - program_start_time > 15000 && goal_i != 0 && goal_j != 0) {
     // After 15 seconds of operation, set the goal vertex to 0,0!
     goal_i = 0; goal_j = 0;    
     goal_changed = true;
   }
   
+  // Precompute these, since we will more than likely need them in all major states
   sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
+  sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
   /****************************************/
   // Implement your state machine here    //
   // in place of the example code         //
   /****************************************/
-  
   switch(current_state){
     case STATE_START:
       if (path != NULL){
         delete path;
       }
-      prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j));
-      path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), ij_coordinates_to_vertex_index(goal_i, goal_j));
+      prev = run_dijkstra(world_map, sparki_idx);
+      path = reconstruct_path(prev, sparki_idx, ij_coordinates_to_vertex_index(goal_i, goal_j));
       goal_changed = false;
       // check for degenerate situation in which there is no path from start to end
-      if (path[1] == -1){ // FIXME? this may not be right
-        if (ij_coordinates_to_vertex_index(sparki_i, sparki_j) != ij_coordinates_to_vertex_index(dest_i, dest_j)){
-          // no path found
+      if (path[1] == -1){
+        if (sparki_idx != ij_coordinates_to_vertex_index(goal_i, goal_j)){
+          // no path found, and there's distance to travel
           current_state = STATE_NO_PATH;
         }
         else {
@@ -457,19 +431,21 @@ void loop () {
       }
       if (sparki_in_grid){
         // perform navigation normally 
-        sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
         // this for loop intentionally left blank
         for (path_iter; path[path_iter] != -1 && path[path_iter] != sparki_idx; path_iter++){}
         if (path[path_iter] == -1){
-          sparki.print("Sparki gets to blind spot \n"); 
-          moveStop();
+          // TODO this is a corner case that maybe needs more coverage.
+          // We didn't find Sparki anywhere in the path
+          // Can add a new state that is dedicated to fixing Sparki in this scenario
+          // and reuse for the else at the very bottom? Hopefully this should never happen though
+          sparki.println("Sparki gets to blind spot");
+          current_state = STATE_NO_PATH; // just to be safe
         }
         else {
           path_iter++;  
           next_vertex = path[path_iter];
           if (next_vertex == -1){
             current_state = STATE_FINISHED;
-            moveStop();
           }
           else {
             vertex_index_to_ij_coordinates(next_vertex, &dest_i, &dest_j);
@@ -486,11 +462,7 @@ void loop () {
               else {
                 dest_pose_theta = 0;
                 Serial.println("Invalid value for next and nextnext?");
-                Serial.print("Values are ");
-                Serial.print(next_vertex);
-                Serial.print(" and ");
-                Serial.print(next_next_vertex);
-                Serial.print(", respectively");
+                Serial.print("Values are "); Serial.print(next_vertex); Serial.print(" and "); Serial.print(next_next_vertex); Serial.println(", respectively");
               };
             }
        
@@ -510,54 +482,32 @@ void loop () {
       compute_IK_errors();
       compute_IK_wheel_rotations();
       if (is_robot_at_IK_destination_pose()){
-        moveStop();
+        moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
         current_state = STATE_HAS_PATH; 
       }
       else{
         set_IK_motor_rotations();
       }     
       break;
+    case STATE_NO_PATH:
+      moveStop();
+      if (goal_changed){
+        current_state = STATE_START;
+      }
+      break;
     case STATE_FINISHED:
+      moveStop();
       // TODO print something to the screen or have a party or whatever who cares
       if (path != NULL){
         delete path;
         path = NULL;
       }
-      break;
-    case STATE_NO_PATH:
       if (goal_changed){
         current_state = STATE_START;
       }
       break;
   }
   sparki.updateLCD();
-
-  // Example code to use IK //
-  // compute_IK_errors();
-  // compute_IK_wheel_rotations();
-  // set_IK_motor_rotations();
-  // if (is_robot_at_IK_destination_pose()) {
-  //   moveStop();
-  // }
-  ///////////////////////////
-
-  // Example code to retrieve a path from Dijkstra //
-  // prev = run_dijkstra(world_map, ij_coordinates_to_vertex_index(source_i, source_j)); 
-  // path = reconstruct_path(prev, ij_coordinates_to_vertex_index(source_i, source_j), ij_coordinates_to_vertex_index(goal_i, goal_j));
-
-  // TODO: Do something with path here instead of just displaying it!
-  /*
-  sparki.clearLCD();
-  sparki.print("Source: "); sparki.print(source_i); sparki.print(", "); sparki.println(source_j);
-  sparki.print("Goal: "); sparki.print(goal_i); sparki.print(", "); sparki.println(goal_j);
-  for (int i=0; path[i] != -1; ++i) {
-    sparki.print(path[i]);
-    sparki.print(" -> "); 
-  }
-  sparki.println(" DONE! "); 
-  sparki.updateLCD();
-  */
-  //delete path; path=NULL; // Important! Delete the arrays returned from reconstruct_path when you're done with them!
  
   ///////////////////////////////////////////////////  
  
