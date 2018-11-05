@@ -383,7 +383,6 @@ void loop () {
   displayOdometry();
 
   // Your code should work with this test uncommented!
-  // TODO tweak this a little bit so that we can reasonably get to the original goal before changing it?
   if (millis() - program_start_time > 15000 && goal_i != 0 && goal_j != 0) {
     // After 15 seconds of operation, set the goal vertex to 0,0!
     goal_i = 0; goal_j = 0;    
@@ -429,12 +428,8 @@ void loop () {
         // this for loop intentionally left blank
         for (path_iter; path[path_iter] != -1 && path[path_iter] != sparki_idx; path_iter++){}
         if (path[path_iter] == -1){
-          // TODO this is a corner case that maybe needs more coverage.
-          // We didn't find Sparki anywhere in the path
-          // Can add a new state that is dedicated to fixing Sparki in this scenario
-          // and reuse for the else at the very bottom? Hopefully this should never happen though
-          sparki.println("Sparki gets to blind spot");
-          current_state = STATE_NO_PATH; // just to be safe
+          // Sparki deviates from the path, so we have to try and find a new safe path from whatever our current position is to the goal
+          current_state = STATE_START;
         }
         else {
           path_iter++;  
@@ -466,7 +461,11 @@ void loop () {
         }
       }
       else {
-        // TODO sparki isn't in the grid; find a way to get him back???
+        // TODO sparki isn't in the grid; in the general case, we may not be able to get him back
+        // if the only vertices that are unoccupied are behind a wall relative to Sparki,
+        // then we don't have enough a priori knowledge of the environment to reenter the grid
+        // We could try to see if there's a straight-line path that works using linear interpolation
+        // and otherwise transition to NO_PATH, but we can't always fix this scenario; should never happen anyways.
         current_state = STATE_NO_PATH;
       }
       break;
@@ -492,7 +491,6 @@ void loop () {
       break;
     case STATE_FINISHED:
       moveStop();
-      // TODO print something to the screen or have a party or whatever who cares
       if (path != NULL){
         delete path;
         path = NULL;
