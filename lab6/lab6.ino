@@ -1,4 +1,11 @@
-#include <sparki.h> 
+#ifdef SPARKI_HEADLESS_DEBUGGING
+#include "sparki.h"
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+#else
+#include <sparki.h>
+#define M_PI 3.14159
+#endif
 
 #define TRUE 1
 #define FALSE 0
@@ -10,9 +17,6 @@
 #define ROBOT_SPEED 0.0278
 #define CYCLE_TIME .100
 #define AXLE_DIAMETER 0.0865
-#ifndef M_PI // Avoids headless driver file throwing up warnings due to math.h definition
-#define M_PI 3.14159
-#endif
 #define WHEEL_RADIUS 0.03
 #define FWD 1
 #define NONE 0
@@ -36,15 +40,6 @@
 #define MAP_SIZE_Y 0.42
 
 #define BIG_NUMBER 255
-
-// Allows for compilation under headless driver file, hopefully avoids breaking anything here
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
-#endif
-
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
 
 short prev_holder[NUM_X_CELLS*NUM_Y_CELLS];
 int current_state;

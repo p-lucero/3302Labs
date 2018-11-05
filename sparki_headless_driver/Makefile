@@ -1,9 +1,6 @@
-IDIR =.
+IDIR=.
 CC=g++
-CFLAGS=-I$(IDIR) -x c++
-
-ODIR=obj
-LDIR =.
+CFLAGS=-I$(IDIR) -x c++ -DSPARKI_HEADLESS_DEBUGGING
 
 sparki_code = ../lab6/lab6.ino
 
