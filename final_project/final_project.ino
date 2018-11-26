@@ -2,6 +2,7 @@ void setup() {
   // put your setup code here, to run once:
 
   // current_state = PATH_PLANNING
+  // goal_state = person_to_rescue
 
 }
 
@@ -95,6 +96,18 @@ void loop() {
       */
       
     break;
+
+    case CARRY_PERSON:
+
+    /*
+     * 
+     * We've already determined the object in front of us is a person
+     * Go straight to it
+     * Close arms around it
+     * Set goal to outside/front door/however we want to do this
+     * current_state = PATH_PLANNING
+     * 
+     */
     
   }
 
