@@ -28,3 +28,18 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 // Bit-masks for manipulating the world map
 #define LOWER_HALF 0xF
 #define UPPER_HALF 0xF0
+#define NORTH 0
+#define EAST 1
+#define SOUTH 2
+#define WEST 3
+
+// Cell states in world map
+#define FREE 0
+#define KNOWN_OBSTACLE 1
+#define NEW_OBSTACLE 2
+#define TARGET_PERSON 3
+#define ENTRYWAY 4
+#define OFFICE 5
+#define ELEVATOR 6
+#define EXIT 7
+#define FIRE 9
