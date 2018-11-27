@@ -7,7 +7,10 @@
 #define PATH_FOLLOWING 2
 #define IN_ELEVATOR 3
 #define FOUND_OBJECT 4
-#define CARRY_PERSON 5
+#define FIND_PERSON 5
+#define CARRY_PERSON 6
+#define FINISHED 254
+#define DUMMY_STATE 255
 
 // Robot physical constants
 #define ROBOT_SPEED 0.0278
@@ -46,5 +49,9 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 #define ELEVATOR 6
 #define EXIT 7
 #define FIRE 9
+
+// Map locations
+#define EXIT_IDX 0
+#define ELEVATOR_IDX // FIXME; not strictly necessary, but removes the need for find_elevator method
 
 #endif
