@@ -1,17 +1,17 @@
 #include "final_project.h"
 
-bool arr_empty(byte* arr, byte len){
+bool arr_empty(short* arr, byte len){
 	for (byte i = 0; i < len; i++){
 		if (arr[i] >= 0 && arr[i] < BIG_NUMBER){
-      return true;
+      return false;
     }
 	}
-  return false;
+  return true;
 }
 
-int get_min_index(short *arr, int len) {
+int get_min_index(short *arr, byte len) {
   int min_idx=0;
-  for (int i=0;i < len; ++i) {
+  for (byte i=0;i < len; ++i) {
     if (arr[min_idx] < 0 || (arr[i] < arr[min_idx] && arr[i] >= 0)) {
       min_idx = i;
     }
@@ -111,9 +111,94 @@ byte get_travel_cost(byte vertex_source, byte vertex_dest, byte floor) {
   if (d_type == KNOWN_OBSTACLE || d_type == NEW_OBSTACLE || d_type == FIRE)
     return BIG_NUMBER;
 
-  return 1; // If everything else succeeded, then we can move here
+  return 1; // If everything else succeeded, then we can move between these two
 }
 
-short* get_path_from_dijkstra(byte source_id, byte source_floor, byte dest, byte dest_floor){
+byte find_elevator(byte floor){
+  for (byte i = 0; i < NUM_X_CELLS; i++){
+    for (byte j = 0; j < NUM_Y_CELLS; j++){
+      if (cell_gettype(i, j, floor) == ELEVATOR)
+        return ij_coordinates_to_vertex_index(i, j);
+    }
+  }
+  return BIG_NUMBER; // wow I really want this to never happen
+}
+
+short* get_path_from_dijkstra(byte source_id, byte source_floor, byte dest_id, byte dest_floor){
+  if (source_floor != dest_floor){
+    dest_id = find_elevator(source_floor);
+    if (dest_id == BIG_NUMBER){
+      Serial.print("Unable to find an elevator on floor "); Serial.println(source_floor);
+      Serial.println("Something went very wrong with the mapping in setup()!");
+      return NULL;
+    }
+    dest_floor = source_floor;
+  }
+  int cur_vertex = -1;
+  int cur_cost = -1;
+  int min_index = -1;
+  int travel_cost = -1;
+  byte dist[NUM_X_CELLS*NUM_Y_CELLS];
+  short prev[NUM_X_CELLS*NUM_Y_CELLS];
+  short Q_cost[NUM_Y_CELLS*NUM_X_CELLS];
+
+  // Initialize our variables
+  for (int i = 0; i < NUM_X_CELLS * NUM_Y_CELLS; ++i) {
+    Q_cost[i] = -1;
+    dist[i] = BIG_NUMBER;
+    prev[i] = -1;
+  }
+
+  dist[source_id] = 0;
+  Q_cost[source_id] = 0;
+  while (!arr_empty(Q_cost,NUM_X_CELLS*NUM_Y_CELLS)) {
+    min_index = get_min_index(Q_cost, NUM_X_CELLS*NUM_Y_CELLS);
+    if (min_index < 0) {
+      break; // Queue is empty somehow!
+    }
+    cur_vertex = min_index; // Vertex ID is same as array indices
+    cur_cost = Q_cost[cur_vertex]; // Current best cost for reaching vertex
+    Q_cost[cur_vertex] = -1; // Remove cur_vertex from the queue.
+
+    // Iterate through all of node's neighbors and see if cur_vertex provides a shorter
+    // path to the neighbor than whatever route may exist currently.
+    for (byte neighbor_idx = 0; neighbor_idx < NUM_X_CELLS*NUM_Y_CELLS; ++neighbor_idx) {     
+      short alt = -1;
+      travel_cost = get_travel_cost(cur_vertex, neighbor_idx, source_floor);
+      if (travel_cost == BIG_NUMBER || travel_cost == 0) {
+        continue; // Nodes are not neighbors/cannot traverse... skip!
+      }
+      alt = dist[cur_vertex] + travel_cost;
+      if (alt < dist[neighbor_idx]) {
+        // New shortest path to node at neighbor_idx found!
+        dist[neighbor_idx] = alt;
+        Q_cost[neighbor_idx] = alt;
+        prev[neighbor_idx] = cur_vertex;
+      }
+    } 
+  }
+
+  byte pathLength = 0;
+  int vtx = dest_id;
+  int prev_vtx = -1;
+  while (vtx != -1){
+    pathLength++;
+    prev_vtx = vtx;
+    vtx = prev[vtx];
+  }
+  if (prev_vtx != source_id){
+    return NULL; // There is no path from the source to the destination
+  }
+  int* final_path = new int[pathLength + 1];
+  final_path[pathLength] = -1;
+  int idx = pathLength - 1;
   
+  vtx = dest_vertex;
+  while (vtx != -1){
+    final_path[idx] = vtx;
+    vtx = prev[vtx];
+    idx--;
+  }
+  
+  return final_path;
 }
