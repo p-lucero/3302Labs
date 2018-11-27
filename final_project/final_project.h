@@ -17,6 +17,8 @@
 #define CYCLE_TIME .100
 #define AXLE_DIAMETER 0.0865
 #define WHEEL_RADIUS 0.03
+#define SPARKI_GRAB_DISTANCE 4
+#define SPARKI_GRIP_TIME 2500
 #define MAP_SIZE_X // TODO
 #define MAP_SIZE_Y // TODO
 // as a special variable to improve readability; may improve performance as a const too

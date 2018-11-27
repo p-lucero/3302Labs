@@ -34,6 +34,8 @@ short* path = NULL;
 
 void setup() {
   // TODO set up the world map here
+
+  sparki.servo(0); // ensure Sparki's looking forwards
   // current_state = PATH_PLANNING
   // goal_state = person_to_rescue
 }
@@ -53,7 +55,8 @@ void loop() {
   // Set up bookkeeping variables; add whatever you need to this set of declarations
   sparki.clearLCD();
   unsigned long begin_time = millis(), end_time;
-  byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next;
+  byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state;
+  int ping_dist;
 
   updateOdometry();
   displayOdometry();
@@ -62,16 +65,19 @@ void loop() {
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
   goal_idx = ij_coordinates_to_vertex_index(goal_i, goal_j);
 
-  // TODO check if we've found an object using sparki.ping() or sparki.ping_single()
-  // if yes, transition to FOUND_OBJECT; be sure to save previous state so we can transition back!!
+  // check if we've found an object during normal operation
+
+  // FIXME these may be unreliable, but I'd really rather not use their ping() implementation
+  // may be worth copying it and coding our own that doesn't utilize a 20ms delay between each ping?
+  // while also taking the best value. merits testing to see if it's necessary.
+  ping_dist = sparki.ping_single(); 
+  if (ping_dist != -1 && current_state != FIND_PERSON && current_state != CARRY_PERSON){
+    saved_state = current_state;
+    current_state = FOUND_OBJECT;
+  }
 
   switch (current_state){
     case PATH_PLANNING:
-
-    // FIXME should we check and set the goal here or elsewhere?
-    // might make semantically more sense to set the goal before we enter PATH_PLANNING
-    // such that we don't have to perform checks on how we got here to figure out
-    // whether we need to set the goal to the exit, a new person, the elevator, etc...
       if (path != NULL){
         delete path;
       }
@@ -99,6 +105,7 @@ void loop() {
         if (goal_floor == 0 && goal_idx == EXIT_IDX){
           // TODO check if we have more people to save
           /* 
+          open the gripper and drop a person, if any, safely outside
           if (there are more people to save){
             set goal to be the next person to save
             current_state = PATH_PLANNING
@@ -153,7 +160,6 @@ void loop() {
         break;
 
     case IN_ELEVATOR:
-
       /*
        * TODO
        * Use bluetooh remote here
@@ -167,62 +173,62 @@ void loop() {
       break;
 
     case FOUND_OBJECT:
-
       /*
        *
-       *if(found_object != candle){
-       *
-       *
-       *  Go to object
-       *  pickup object
-       *  set goal to be the exit
-       *  current_state = PATH_PLANNING;
-       *       
+       *if(found_object != candle){ 
+       * current_state = CARRY_PERSON;
        *}else{
-       *
        * update map with candle info
-       * current_state = PATH_PLANNING;
-       *
+       * if path is blocked by new object
+       *   current_state = PATH_PLANNING;
+       * else
+       *   current_state = saved_state;
        *}
-       *
-       *
       */
       
     break;
 
     case FIND_PERSON:
+      if (ping_dist != -1)
+        moveStop(); // just in case
+        current_state = CARRY_PERSON;
+      else {
+        // spin
+        left_dir = DIR_CCW
+        left_wheel_rotating = FWD;
+        left_speed_pct = .5;
 
-      /*
-      rotate slightly and update odometry manually until we find an object
-      once well-aligned, transition to CARRY_PERSON
-      */
+        right_dir = DIR_CCW
+        right_wheel_rotating = BCK;
+        right_speed_pct = .5;
 
+        // FIXME rotate a little bit slower so we don't miss anyone, maybe unnecessary? needs testing
+        sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
+        sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
+      }
       break;
 
     case CARRY_PERSON:
-
-    /*
-     * 
-     * We've already determined the object in front of us is a person
-     * Go straight to it
-     * Close arms around it
-     * If we lose sight of it, transition to FIND_PERSON
-     * Set goal to outside/front door/however we want to do this
-     * current_state = PATH_PLANNING
-     * 
-     */
-     
-     break;
+      moveForward();
+      if (ping_dist <= SPARKI_GRAB_DISTANCE && ping_dist != -1){
+        moveStop();
+        sparki.gripperClose();
+        delay(SPARKI_GRIP_TIME);
+        sparki.gripperStop();
+        goal_i = 0;
+        goal_j = 0;
+        goal_floor = 0;
+        current_state = PATH_PLANNING;
+      }
+      break;
 
     case FINISHED:
-
       // Saved everybody that we meant to save, or encountered some other "completion" condition.
       // Probably does nothing.
 
       break;
     
     case DUMMY_STATE:
-
       // Does nothing. We end up here if something goes wrong and we can't do anything else.
       // We could use the controller here to manually transition to another state,
       // f.e. one that clears Sparki's current odometry information and assumes him
