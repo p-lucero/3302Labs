@@ -189,11 +189,11 @@ short* get_path_from_dijkstra(byte source_id, byte source_floor, byte dest_id, b
   if (prev_vtx != source_id){
     return NULL; // There is no path from the source to the destination
   }
-  int* final_path = new int[pathLength + 1];
+  short* final_path = new short[pathLength + 1];
   final_path[pathLength] = -1;
-  int idx = pathLength - 1;
+  byte idx = pathLength - 1;
   
-  vtx = dest_vertex;
+  vtx = dest_id;
   while (vtx != -1){
     final_path[idx] = vtx;
     vtx = prev[vtx];

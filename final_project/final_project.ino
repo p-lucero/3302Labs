@@ -28,6 +28,9 @@ float d_err = 0., b_err =  0., h_err = 0., phi_l = 0., phi_r = 0.;
 float left_speed_pct = 0., right_speed_pct = 0.;
 byte left_dir, right_dir, left_wheel_rotating = NONE, right_wheel_rotating = NONE;
 byte pose_floor = 0, dest_floor;
+byte goal_i, goal_j, goal_floor;
+
+short* path = NULL;
 
 void setup() {
   // TODO set up the world map here
@@ -54,6 +57,8 @@ void loop() {
   switch (current_state){
     case PATH_PLANNING:
 
+      // Closely mimics behavior of STATE_START from lab6
+
     /*
      * 
      * Figure out where next person is
@@ -71,7 +76,15 @@ void loop() {
 
     break;
 
+    case PATH_FINDING_NEXT:
+
+      // Closely mimics behavior of STATE_HAS_PATH from lab6
+
+    break;
+
     case PATH_FOLLOWING:
+
+      // Closely mimics behavior of STATE_SEEKING_POSE from lab6
 
       /*
        * 
@@ -84,18 +97,6 @@ void loop() {
        *  current_state = PATH_PLANNING
        *  
        * }
-       * 
-       */
-
-    break;
-
-    case WRONG_FLOOR:
-
-      /*
-       * 
-       * Figure out shortest path to elevator
-       * Would this just be Djikstra's with a goal of elevator?
-       * We might not need a state as well as IN_ELEVATOR state
        * 
        */
 

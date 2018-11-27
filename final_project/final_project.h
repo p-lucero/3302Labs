@@ -1,7 +1,10 @@
+#ifndef FINAL_PROJECT_DEFINES
+#define FINAL_PROJECT_DEFINES
+
 // State machine defines
 #define PATH_PLANNING 0
-#define PATH_FOLLOWING 1
-#define WRONG_FLOOR 2
+#define PATH_FINDING_NEXT 1
+#define PATH_FOLLOWING 2
 #define IN_ELEVATOR 3
 #define FOUND_OBJECT 4
 #define CARRY_PERSON 5
@@ -43,3 +46,5 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 #define ELEVATOR 6
 #define EXIT 7
 #define FIRE 9
+
+#endif
