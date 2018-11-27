@@ -1,3 +1,5 @@
+// Main code file, containing the outline of the logic for the state machine
+
 // This snippet preserves the include of the sparki header file under Sparkiduino
 // while also allowing for easier debugging without a Sparki present
 // To make use of this, compile with -DSPARKI_HEADLESS_DEBUGGING in your g++ flags
@@ -10,32 +12,8 @@
 #define M_PI 3.14159
 #endif
 
-// State machine defines
-#define PATH_PLANNING 0
-#define PATH_FOLLOWING 1
-#define WRONG_FLOOR 2
-#define IN_ELEVATOR 3
-#define FOUND_OBJECT 4
-#define CARRY_PERSON 5
-
-// Robot physical constants
-#define ROBOT_SPEED 0.0278
-#define CYCLE_TIME .100
-#define AXLE_DIAMETER 0.0865
-#define WHEEL_RADIUS 0.03
-#define MAP_SIZE_X // TODO
-#define MAP_SIZE_Y // TODO
-// as a special variable to improve readability; may improve performance as a const too
-const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
-
-// Robot digital constants
-#define FWD 1
-#define NONE 0
-#define BCK -1
-#define NUM_X_CELLS 6
-#define NUM_Y_CELLS 6
-#define NUM_FLOORS 2 // FIXME
-#define BIG_NUMBER 255
+// Header file so that important defines are accessible from all .ino files
+#include "final_project.h"
 
 // state machine control variables; prefer byte over int, since it's more efficient
 byte current_state;
@@ -55,6 +33,16 @@ void setup() {
   // TODO set up the world map here
   // current_state = PATH_PLANNING
   // goal_state = person_to_rescue
+}
+
+void displayOdometry() {
+  sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
+  sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
+  sparki.print("T: "); sparki.print(pose_theta*180./M_PI); sparki.print(" Tg: "); sparki.println(dest_pose_theta*180./M_PI);
+  sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
+  sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
+  sparki.print("h: "); sparki.println(to_degrees(h_err));  
+  sparki.print("s: "); sparki.println(current_state);
 }
 
 void loop() {

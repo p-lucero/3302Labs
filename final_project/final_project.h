@@ -1,0 +1,30 @@
+// State machine defines
+#define PATH_PLANNING 0
+#define PATH_FOLLOWING 1
+#define WRONG_FLOOR 2
+#define IN_ELEVATOR 3
+#define FOUND_OBJECT 4
+#define CARRY_PERSON 5
+
+// Robot physical constants
+#define ROBOT_SPEED 0.0278
+#define CYCLE_TIME .100
+#define AXLE_DIAMETER 0.0865
+#define WHEEL_RADIUS 0.03
+#define MAP_SIZE_X // TODO
+#define MAP_SIZE_Y // TODO
+// as a special variable to improve readability; may improve performance as a const too
+const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
+
+// Robot digital constants
+#define FWD 1
+#define NONE 0
+#define BCK -1
+#define NUM_X_CELLS 6
+#define NUM_Y_CELLS 6
+#define NUM_FLOORS 2 // FIXME?
+#define BIG_NUMBER 255
+
+// Bit-masks for manipulating the world map
+#define LOWER_HALF 0xF
+#define UPPER_HALF 0xF0
