@@ -19,8 +19,8 @@
 #define WHEEL_RADIUS 0.03
 #define SPARKI_GRAB_DISTANCE 4
 #define SPARKI_GRIP_TIME 2500
-#define MAP_SIZE_X // TODO
-#define MAP_SIZE_Y // TODO
+#define MAP_SIZE_X .9144 // TODO
+#define MAP_SIZE_Y .9144 // TODO
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 
@@ -55,5 +55,8 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 // Map locations
 #define EXIT_IDX 0
 #define ELEVATOR_IDX // FIXME; not strictly necessary, but removes the need for find_elevator method
+#define INITIAL_GOAL_I 5
+#define INITIAL_GOAL_J 5
+#define INITIAL_GOAL_FLOOR 0
 
 #endif

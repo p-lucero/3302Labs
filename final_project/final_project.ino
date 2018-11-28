@@ -33,11 +33,12 @@ byte goal_i, goal_j, goal_floor;
 short* path = NULL;
 
 void setup() {
-  // TODO set up the world map here
-
+  map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
-  // current_state = PATH_PLANNING
-  // goal_state = person_to_rescue
+  current_state = PATH_PLANNING
+  goal_i = INITIAL_GOAL_I
+  goal_j = INITIAL_GOAL_J
+  goal_floor = INITIAL_GOAL_FLOOR;
 }
 
 void displayOdometry() {
@@ -53,6 +54,7 @@ void displayOdometry() {
 void loop() {
   // Clear the LCD of whatever was present last cycle
   // Set up bookkeeping variables; add whatever you need to this set of declarations
+  sparki.RGB(RGB_OFF);
   sparki.clearLCD();
   unsigned long begin_time = millis(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state;
@@ -160,6 +162,7 @@ void loop() {
         break;
 
     case IN_ELEVATOR:
+      moveStop();
       /*
        * TODO
        * Use bluetooh remote here
@@ -173,6 +176,7 @@ void loop() {
       break;
 
     case FOUND_OBJECT:
+      moveStop();
       /*
        *
        *if(found_object != candle){ 
