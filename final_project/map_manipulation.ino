@@ -38,7 +38,7 @@
 
 /* Call this function to initialize the map */
 void map_create(){
-  //TODO: Add cell creation commands here
+  // Configuring First Floor K=0
   cell_make(0, 0, 0, EXIT, W_S);
   cell_make(0, 1, 0, FREE, W_S);
   cell_make(0, 2, 0, FREE, W_S);
@@ -75,13 +75,16 @@ void map_create(){
   cell_make(5, 3, 0, OFFICE, W_NE);
   cell_make(5, 4, 0, OBJECT, W_NSEW);
   cell_make(5, 5, 0, ELEVATOR, W_NE);
+  
+  // Configuring 2nd Floor K=1
+  
 }
 
 
 //**CELL CREATION**//
 
 void cell_settype(int i, int j, int k, int type){
-  world_map[i][j][k] = (type & 0b00001111) | (map[i][j][k] & 0b11110000);
+  world_map[i][j][k] = (type & 0b00001111) | (world_map[i][j][k] & 0b11110000);
 }
 
 void cell_setwalls(int i, int j, int k, int wallbits){
