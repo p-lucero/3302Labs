@@ -19,8 +19,8 @@
 #define WHEEL_RADIUS 0.03
 #define SPARKI_GRAB_DISTANCE 4
 #define SPARKI_GRIP_TIME 2500
-#define MAP_SIZE_X .9144 // TODO
-#define MAP_SIZE_Y .9144 // TODO
+#define MAP_SIZE_X .9144
+#define MAP_SIZE_Y .9144
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 
@@ -30,7 +30,7 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 #define BCK -1
 #define NUM_X_CELLS 6
 #define NUM_Y_CELLS 6
-#define NUM_FLOORS 2 // FIXME?
+#define NUM_FLOORS 2
 #define BIG_NUMBER 255
 
 // Bit-masks for manipulating the world map
@@ -41,20 +41,9 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 #define SOUTH 2
 #define WEST 3
 
-// Cell states in world map
-#define FREE 0
-#define KNOWN_OBSTACLE 1
-#define NEW_OBSTACLE 2
-#define TARGET_PERSON 3
-#define ENTRYWAY 4
-#define OFFICE 5
-#define ELEVATOR 6
-#define EXIT 7
-#define FIRE 9
-
 // Map locations
 #define EXIT_IDX 0
-#define ELEVATOR_IDX // FIXME; not strictly necessary, but removes the need for find_elevator method
+#define ELEVATOR_IDX 35
 #define INITIAL_GOAL_I 5
 #define INITIAL_GOAL_J 5
 #define INITIAL_GOAL_FLOOR 0
