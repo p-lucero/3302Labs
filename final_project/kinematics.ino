@@ -121,49 +121,27 @@ void updateOdometry(float cycle_time) {
   if (pose_theta <= -M_PI) pose_theta += 2.*M_PI;
 }
 
-// unsigned long last_cycle_time = 0;
-// int state = 0;
+void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry) {
+  *rx = dist * cos(0);
+  *ry = dist * sin(0);
+}
 
-// dummy_loop(){
-//   unsigned long begin_time = millis();
-//   unsigned long delay_time = 0;
-//   updateOdometry();
-//   displayOdometry();
-
-//   updateOdometry((begin_time - last_cycle_time) / 1000.0);
-
-//   switch(state):
-//     case 0:
-      
-
-//       //this would only be in 'carry person' and 'path following'
-//       compute_IK_errors();
-//       compute_IK_wheel_rotations();
-//       if (is_robot_at_IK_destination_pose()){
-//         moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
-//         current_state = STATE_HAS_PATH; 
-//       }
-//       else{
-//         set_IK_motor_rotations();
-//       }
-
-//     break;
+void transform_robot_to_world_coords(float x, float y, float *gx, float *gy) {
+    *gx = cos(pose_theta)*x  - sin(pose_theta)*y + pose_x;
+    *gy = sin(pose_theta)*x  + cos(pose_theta)*y + pose_y;
   
+}
 
-//   delay_time = millis() - begin_time; // total time that the logic of the loop took
-
-//   // actually perform timing changes
-//   if (delay_time < 1000*MIN_CYCLE_TIME)
-//     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
-//   else
-//     delay(10);
-//   last_cycle_time = begin_time; // Ensure that we use the right value for the next loop, which was the beginning of this loop
-  
-// }
-
-
-// FIXME the existing odometry formula (updateOdometry()) from lab 6 is VERY reliant on deterministic cycle time
-// we should find a way to fix that so that it doesn't rely on that determinism
-// and so that longer cycles can be accomodated without destroying Sparki's accuracy
-// hopefully this should be as simple as measuring the time from the start of the previous loop
-// to the start of the current loop and dividing by 1000 while casting to float.
+bool transform_xy_to_grid_coords(float x, float y, byte *i, byte *j) {
+  // FINISHED: Return 0 if the X,Y coordinates were out of bounds
+  if((x >= .6) || (y >= .42)){
+    return 0; // returns 0 if x or y is beyond paper in positive direction
+  }
+  if((x < 0) || (y < 0)){
+    return 0; // returns 0 if x or y is boyond paper in negative direction
+  }
+  // FINISHED: Set *i and *j to their corresponding grid coords  
+  *i = floor(x / CELL_RESOLUTION_X);
+  *j = floor(y / CELL_RESOLUTION_Y);
+  return 1;
+}

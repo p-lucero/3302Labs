@@ -34,6 +34,7 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 #define NUM_Y_CELLS 6
 #define NUM_FLOORS 2
 #define BIG_NUMBER 255
+#define FLAME_SENSOR 8
 
 // Bit-masks for manipulating the world map
 #define LOWER_HALF 0xF
@@ -49,5 +50,16 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 #define INITIAL_GOAL_I 5
 #define INITIAL_GOAL_J 5
 #define INITIAL_GOAL_FLOOR 0
+
+// Cell types
+#define FREE 0
+#define OBJECT 1
+#define OBSTACLE 2
+#define PERSON 3
+#define ENTRY 4
+#define OFFICE 5
+#define ELEVATOR 6
+#define EXIT 7
+#define FIRE 9
 
 #endif

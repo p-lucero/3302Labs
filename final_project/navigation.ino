@@ -110,9 +110,9 @@ byte get_travel_cost(byte vertex_source, byte vertex_dest, byte floor) {
   d_type = cell_gettype(d_i, d_j, floor);
 
   // Impassable for reasons other than walls
-  if (s_type == KNOWN_OBSTACLE || s_type == NEW_OBSTACLE || s_type == FIRE)
+  if (s_type == OBJECT || s_type == OBSTACLE || s_type == FIRE)
     return BIG_NUMBER;
-  if (d_type == KNOWN_OBSTACLE || d_type == NEW_OBSTACLE || d_type == FIRE)
+  if (d_type == OBJECT || d_type == OBSTACLE || d_type == FIRE)
     return BIG_NUMBER;
 
   return 1; // If everything else succeeded, then we can move between these two

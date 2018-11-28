@@ -12,8 +12,13 @@
 #define M_PI 3.14159
 #endif
 
+#include <Radio.h>
+
 // Header file so that important defines are accessible from all .ino files
 #include "final_project.h"
+
+const float CELL_RESOLUTION_X = MAP_SIZE_X / NUM_X_CELLS;  // Line following map is ~60cm x ~42cm
+const float CELL_RESOLUTION_Y = MAP_SIZE_Y / NUM_Y_CELLS; // Line following map is ~60cm x ~42cm
 
 // state machine control variables; prefer byte over int, since it's more efficient
 byte current_state;
@@ -38,6 +43,7 @@ unsigned long last_cycle_time;
 short* path = NULL;
 
 void setup() {
+  pinMode(FLAME_SENSOR, INPUT);
   map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
   current_state = PATH_PLANNING;
@@ -52,8 +58,11 @@ void loop() {
   sparki.RGB(RGB_OFF);
   sparki.clearLCD();
   unsigned long begin_time = millis(), end_time;
-  byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state;
-  int ping_dist;
+  byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
+  int ping_dist, flame_detected;
+  float rx, ry, wx, wy;
+
+  flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry((begin_time - last_cycle_time) / 1000.0);
   displayOdometry();
@@ -71,6 +80,9 @@ void loop() {
   if (ping_dist != -1 && current_state != FIND_PERSON && current_state != CARRY_PERSON){
     saved_state = current_state;
     current_state = FOUND_OBJECT;
+    transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
+    transform_robot_to_world_coords(rx, ry, &wx, &wy);
+    transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
   }
 
   switch (current_state){
@@ -137,7 +149,7 @@ void loop() {
     case PATH_FOLLOWING:
     {
       bool path_valid = true;
-      // if (any objects put on map at start of loop)
+      // if (any objects put on map at start of loop) TODO
         // iterate through path array
         // if (object(s) occupy a square that's part of the path that we're not past)
           path_valid = false;
@@ -160,6 +172,7 @@ void loop() {
 
     case IN_ELEVATOR:
       moveStop();
+
       /*
        * TODO
        * Use bluetooh remote here
@@ -174,18 +187,27 @@ void loop() {
 
     case FOUND_OBJECT:
       moveStop();
-      /*
-       *
-       *if(found_object != candle){ 
-       * current_state = CARRY_PERSON;
-       *}else{
-       * update map with candle info
-       * if path is blocked by new object
-       *   current_state = PATH_PLANNING;
-       * else
-       *   current_state = saved_state;
-       *}
-      */
+
+      if (flame_detected != 0){ // can also add a call to the remote if this doesn't work well
+        current_state = CARRY_PERSON;
+      }
+      else {
+        world_map[obj_i][obj_j][pose_floor] = (world_map[obj_i][obj_j][pose_floor] & UPPER_HALF) | (FIRE & LOWER_HALF);
+        bool path_blocked = false, sparki_found = false;
+        byte obj_idx = ij_coordinates_to_vertex_index(obj_i, obj_j);
+        for (byte path_iter = 0; path[path_iter] != -1; path_iter++){
+          if (path[path_iter] == obj_idx && !sparki_found){
+            path_blocked = true;
+            break;
+          }
+          else if (path[path_iter] == sparki_idx)
+            sparki_found = true;
+        }
+        if (path_blocked)
+          current_state = PATH_PLANNING;
+        else
+          current_state = saved_state;
+      }
       
     break;
 

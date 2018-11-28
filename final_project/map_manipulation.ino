@@ -20,17 +20,6 @@
 #define W_NSEW  0b11110000
 #define W_0     0b00000000
 
-// Cell types
-#define FREE 0
-#define OBJECT 1
-#define OBSTACLE 2
-#define PERSON 3
-#define ENTRY 4
-#define OFFICE 5
-#define ELEVATOR 6
-#define EXIT 7
-#define FIRE 9
-
 
 //byte map[MAP_SIZE_X][MAP_SIZE_Y][MAP_SIZE_Z]; //3d byte array. Z corresponds to number of floors in building
 
