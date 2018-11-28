@@ -2,6 +2,23 @@
 
 // TODO fill this file with inverse kinematics functions (from lab 6)
 
+float to_radians(double deg) {
+  return  deg * 3.1415/180.;
+}
+
+float to_degrees(double rad) {
+  return  rad * 180 / 3.1415;
+}
+
+void moveForward() {
+  left_dir = DIR_CCW;
+  right_dir = DIR_CW;
+  left_wheel_rotating = FWD;
+  right_wheel_rotating = FWD;
+  left_speed_pct = 1.0;
+  right_speed_pct = 1.0;
+  sparki.moveForward();
+}
 
 void moveStop() {
   left_wheel_rotating = NONE;
@@ -73,6 +90,9 @@ void set_IK_motor_rotations() {
   sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
 }
 
+bool is_robot_at_IK_destination_pose() {
+  return (d_err <= DISTANCE_MARGIN && abs(h_err) < HEADING_MARGIN);
+}
 
 void displayOdometry() {
   sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
@@ -101,45 +121,45 @@ void updateOdometry(float cycle_time) {
   if (pose_theta <= -M_PI) pose_theta += 2.*M_PI;
 }
 
-unsigned long last_cycle_time = 0;
-int state = 0;
+// unsigned long last_cycle_time = 0;
+// int state = 0;
 
-dummy_loop(){
-  unsigned long begin_time = millis();
-  unsigned long delay_time = 0;
-  updateOdometry();
-  displayOdometry();
+// dummy_loop(){
+//   unsigned long begin_time = millis();
+//   unsigned long delay_time = 0;
+//   updateOdometry();
+//   displayOdometry();
 
-  updateOdometry((begin_time - last_cycle_time) / 1000.0);
+//   updateOdometry((begin_time - last_cycle_time) / 1000.0);
 
-  switch(state):
-    case 0:
+//   switch(state):
+//     case 0:
       
 
-      //this would only be in 'carry person' and 'path following'
-      compute_IK_errors();
-      compute_IK_wheel_rotations();
-      if (is_robot_at_IK_destination_pose()){
-        moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
-        current_state = STATE_HAS_PATH; 
-      }
-      else{
-        set_IK_motor_rotations();
-      }
+//       //this would only be in 'carry person' and 'path following'
+//       compute_IK_errors();
+//       compute_IK_wheel_rotations();
+//       if (is_robot_at_IK_destination_pose()){
+//         moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
+//         current_state = STATE_HAS_PATH; 
+//       }
+//       else{
+//         set_IK_motor_rotations();
+//       }
 
-    break;
+//     break;
   
 
-  delay_time = millis() - begin_time; // total time that the logic of the loop took
+//   delay_time = millis() - begin_time; // total time that the logic of the loop took
 
-  // actually perform timing changes
-  if (delay_time < 1000*MIN_CYCLE_TIME)
-    delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
-  else
-    delay(10);
-  last_cycle_time = begin_time; // Ensure that we use the right value for the next loop, which was the beginning of this loop
+//   // actually perform timing changes
+//   if (delay_time < 1000*MIN_CYCLE_TIME)
+//     delay(1000*MIN_CYCLE_TIME - delay_time); // make sure each loop takes at least MIN_CYCLE_TIME ms
+//   else
+//     delay(10);
+//   last_cycle_time = begin_time; // Ensure that we use the right value for the next loop, which was the beginning of this loop
   
-}
+// }
 
 
 // FIXME the existing odometry formula (updateOdometry()) from lab 6 is VERY reliant on deterministic cycle time

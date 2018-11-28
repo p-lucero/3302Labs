@@ -21,6 +21,10 @@ byte current_state;
 // World map
 byte world_map[NUM_X_CELLS][NUM_Y_CELLS][NUM_FLOORS];
 
+void moveForward();
+void moveStop();
+bool is_robot_at_IK_destination_pose();
+
 // IK and odometry variables
 float pose_x = 0., pose_y = 0., pose_theta = 0.;
 float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
@@ -28,27 +32,18 @@ float d_err = 0., b_err =  0., h_err = 0., phi_l = 0., phi_r = 0.;
 float left_speed_pct = 0., right_speed_pct = 0.;
 byte left_dir, right_dir, left_wheel_rotating = NONE, right_wheel_rotating = NONE;
 byte pose_floor = 0;
-byte goal_i, goal_j, goal_floor;
+byte dest_i, dest_j, goal_i, goal_j, goal_floor;
+unsigned long last_cycle_time;
 
 short* path = NULL;
 
 void setup() {
   map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
-  current_state = PATH_PLANNING
-  goal_i = INITIAL_GOAL_I
-  goal_j = INITIAL_GOAL_J
+  current_state = PATH_PLANNING;
+  goal_i = INITIAL_GOAL_I;
+  goal_j = INITIAL_GOAL_J;
   goal_floor = INITIAL_GOAL_FLOOR;
-}
-
-void displayOdometry() {
-  sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
-  sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
-  sparki.print("T: "); sparki.print(pose_theta*180./M_PI); sparki.print(" Tg: "); sparki.println(dest_pose_theta*180./M_PI);
-  sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
-  sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
-  sparki.print("h: "); sparki.println(to_degrees(h_err));  
-  sparki.print("s: "); sparki.println(current_state);
 }
 
 void loop() {
@@ -60,10 +55,10 @@ void loop() {
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state;
   int ping_dist;
 
-  updateOdometry();
+  updateOdometry((begin_time - last_cycle_time) / 1000.0);
   displayOdometry();
 
-  bool sparki_in_grid = xy_coordinates_to_vertex_index(pose_x, pose_y, &sparki_i, &sparki_j);
+  bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
   goal_idx = ij_coordinates_to_vertex_index(goal_i, goal_j);
 
@@ -121,7 +116,7 @@ void loop() {
       }
 
       else {
-        vertex_index_to_ij_coordinates(next_vertex, &dest_i, &dest_j);
+        vertex_index_to_ij_coordinates(path_next, &dest_i, &dest_j);
         ij_coordinates_to_xy_coordinates(dest_i, dest_j, &dest_pose_x, &dest_pose_y);
         if (path_2next == -1){
           dest_pose_theta = 0;
@@ -140,26 +135,28 @@ void loop() {
       break;
 
     case PATH_FOLLOWING:
-        bool path_valid = true;
-        // if (any objects put on map at start of loop)
-          // iterate through path array
-          // if (object(s) occupy a square that's part of the path that we're not past)
-            path_valid = false;
+    {
+      bool path_valid = true;
+      // if (any objects put on map at start of loop)
+        // iterate through path array
+        // if (object(s) occupy a square that's part of the path that we're not past)
+          path_valid = false;
 
-        if (path_valid){
-          compute_IK_errors();
-          compute_IK_wheel_rotations();
-          if (is_robot_at_IK_destination_pose()){
-            moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
-            current_state = PATH_FINDING_NEXT; 
-          }
-          else{
-            set_IK_motor_rotations();
-          }
+      if (path_valid){
+        compute_IK_errors();
+        compute_IK_wheel_rotations();
+        if (is_robot_at_IK_destination_pose()){
+          moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
+          current_state = PATH_FINDING_NEXT; 
         }
-        else
-          current_state = PATH_PLANNING;
-        break;
+        else{
+          set_IK_motor_rotations();
+        }
+      }
+      else
+        current_state = PATH_PLANNING;
+      break;
+    }
 
     case IN_ELEVATOR:
       moveStop();
@@ -193,16 +190,17 @@ void loop() {
     break;
 
     case FIND_PERSON:
-      if (ping_dist != -1)
+      if (ping_dist != -1){
         moveStop(); // just in case
         current_state = CARRY_PERSON;
+      }
       else {
         // spin
-        left_dir = DIR_CCW
+        left_dir = DIR_CCW;
         left_wheel_rotating = FWD;
         left_speed_pct = .5;
 
-        right_dir = DIR_CCW
+        right_dir = DIR_CCW;
         right_wheel_rotating = BCK;
         right_speed_pct = .5;
 
@@ -250,4 +248,5 @@ void loop() {
     delay(CYCLE_TIME_MS - (end_time - begin_time));
   else
     delay(10);
+  last_cycle_time = begin_time;
 }

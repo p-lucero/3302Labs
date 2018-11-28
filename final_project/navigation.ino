@@ -1,5 +1,9 @@
 #include "final_project.h"
 
+#define KNOWN_OBSTACLE 1
+#define NEW_OBSTACLE 2
+#define FIRE 9
+
 bool arr_empty(short* arr, byte len){
 	for (byte i = 0; i < len; i++){
 		if (arr[i] >= 0 && arr[i] < BIG_NUMBER){

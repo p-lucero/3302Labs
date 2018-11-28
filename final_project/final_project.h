@@ -21,6 +21,8 @@
 #define SPARKI_GRIP_TIME 2500
 #define MAP_SIZE_X .9144
 #define MAP_SIZE_Y .9144
+#define DISTANCE_MARGIN 0.02 // 2cm of tolerance
+#define HEADING_MARGIN 0.061 // ~3.5 degrees of tolerance
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 

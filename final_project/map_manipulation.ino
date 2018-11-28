@@ -166,7 +166,7 @@ bool cell_haswall_E(int i, int j, int k){
 }
 
 bool cell_haswall_W(int i, int j, int k){
-  return if(world_map[i][j][k] & W_W);
+  return (world_map[i][j][k] & W_W);
 }
 
 
