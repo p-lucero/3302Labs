@@ -111,7 +111,7 @@ void cell_make(int i, int j, int k, int type, int wallbits){
   }
   if(wallbits & W_E){ // Wall added to the East
     if(i+1 < NUM_X_CELLS){ // NOT an edge case
-      world_map[i+1][j][k] = (W_W & 0b11110000) | (world_map[i+1][j][k] & 0b00001111);
+      world_map[i+1][j][k] = (W_E & 0b11110000) | (world_map[i+1][j][k] & 0b00001111);
     }
     else{
       return;
