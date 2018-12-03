@@ -1,7 +1,5 @@
 #include "final_project.h"
 
-// TODO fill this file with inverse kinematics functions (from lab 6)
-
 float to_radians(double deg) {
   return  deg * 3.1415/180.;
 }
@@ -62,8 +60,6 @@ void set_IK_motor_rotations() {
   right_speed_pct = abs(phi_r) / wheel_rotation_normalizer;
 
   // Figure out which direction the wheels need to rotate
-  // FIXME should these zeroes be +-to_radians(1) instead? - Paul
-  // this seems more logical and probably works better but I'm not sure; they had the above initially, but I don't get why
   if (phi_l < 0) {
     left_dir = DIR_CW;
     left_wheel_rotating = BCK;
@@ -95,15 +91,14 @@ bool is_robot_at_IK_destination_pose() {
 }
 
 void displayOdometry() {
-//   sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
-//   sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
-//   sparki.print("T: "); sparki.print(pose_theta*180./M_PI); sparki.print(" Tg: "); sparki.println(dest_pose_theta*180./M_PI);
+  sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
+  sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
+  sparki.print("T: "); sparki.print(int(to_degrees(pose_theta))); sparki.print(" Tg: "); sparki.println(int(to_degrees(dest_pose_theta)));
 
-// //  sparki.print("dX : "); sparki.print(dX ); sparki.print("   dT: "); sparki.println(dTheta);
-//   sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
-//   sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
-//   sparki.print("h: "); sparki.println(to_degrees(h_err));  
-//   sparki.print("s: "); sparki.println(current_state);
+  sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
+  sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
+  sparki.print("h: "); sparki.println(to_degrees(h_err));  
+  sparki.print("s: "); sparki.println(current_state);
 }
 
 //lab 6 odometry except it takes a parameter based on our cycle timme instead of a constant

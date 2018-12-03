@@ -84,7 +84,6 @@ void loop() {
   // Set up bookkeeping variables; add whatever you need to this set of declarations
   sparki.RGB(RGB_OFF);
   sparki.clearLCD();
-  // displayOdometrySerial();
   unsigned long begin_time = millis(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
   int ping_dist, flame_detected;

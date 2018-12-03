@@ -1,3 +1,5 @@
+// Code kept as reference in this .ino file, but already integrated into the main final_project.ino
+
 // #include <Sparki.h>
 // #include <Radio.h> 
 

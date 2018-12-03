@@ -18,16 +18,16 @@
 
 int numpad[10] = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74}; // TODO this could go into progmem but would require rewriting find_num
 
-void flash(byte r, byte g, byte b)
-{
-  for (byte i = 0; i<1000; i++)
-  {
-    if (i % 2 == 0)
-      {sparki.RGB(r, g, b);}
-    else
-      {sparki.RGB(r, g, b);} // FIXME? this is the same color...
-  }
-}
+// void flash(byte r, byte g, byte b)
+// {
+//   for (byte i = 0; i<1000; i++)
+//   {
+//     if (i % 2 == 0)
+//       {sparki.RGB(r, g, b);}
+//     else
+//       {sparki.RGB(r, g, b);} // FIXME? this is the same color...
+//   }
+// }
 
 int find_num(byte code)
 {
@@ -108,6 +108,7 @@ byte* getNextTarget(){
 }
 
 // for reference
+
 // byte* readsensor(bool blocking) 
 // {  
 //   sparki.RGB(RGB_BLUE);

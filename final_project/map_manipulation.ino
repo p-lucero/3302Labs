@@ -123,9 +123,9 @@ void cell_setwalls(byte i, byte j, byte k, byte wallbits){
   world_map[i][j][k] = (wallbits & 0b11110000) | (world_map[i][j][k] & 0b00001111);
 }
 
-void cell_batchsettype(byte i, byte j, byte k, byte type, byte num){
-  //TODO: fill in function
-}
+// void cell_batchsettype(byte i, byte j, byte k, byte type, byte num){
+//   //TODO: fill in function
+// }
 
 void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
   // Set Cell Type
