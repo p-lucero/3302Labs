@@ -23,6 +23,8 @@
 #define MAP_SIZE_Y .9144
 #define DISTANCE_MARGIN 0.02 // 2cm of tolerance
 #define HEADING_MARGIN 0.061 // ~3.5 degrees of tolerance
+#define IR_THRESHOLD 700
+#define PING_DIST_THRESHOLD 12 // FIXME
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 

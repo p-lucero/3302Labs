@@ -67,11 +67,25 @@ void displayOdometrySerial() {
   Serial.print("s: "); Serial.println(current_state);
 }
 
+void gripperOpen(){
+  moveStop();
+  sparki.gripperOpen();
+  delay(5000);
+  sparki.gripperStop();
+}
+
+void gripperClose(){
+  moveStop();
+  sparki.gripperClose();
+  delay(5000);
+  sparki.gripperStop();
+}
+
 void loop() {
   // Clear the LCD of whatever was present last cycle
   // Set up bookkeeping variables; add whatever you need to this set of declarations
   sparki.RGB(RGB_OFF);
-  // sparki.clearLCD();
+  sparki.clearLCD();
   displayOdometrySerial();
   unsigned long begin_time = millis(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
@@ -81,7 +95,7 @@ void loop() {
   flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry((begin_time - last_cycle_time) / 1000.0);
-  // displayOdometry();
+  displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
@@ -92,21 +106,21 @@ void loop() {
   // FIXME these may be unreliable, but I'd really rather not use their ping() implementation
   // may be worth copying it and coding our own that doesn't utilize a 20ms delay between each ping?
   // while also taking the best value. merits testing to see if it's necessary.
-  // ping_dist = sparki.ping_single(); 
-  // if (ping_dist != -1 && ping_dist < 12 && current_state != FIND_PERSON && current_state != CARRY_PERSON){
-  //   saved_state = current_state;
-  //   current_state = FOUND_OBJECT;
-  //   transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
-  //   transform_robot_to_world_coords(rx, ry, &wx, &wy);
-  //   transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
-  // }
+  ping_dist = sparki.ping_single(); 
+  if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD && current_state != FIND_PERSON && current_state != CARRY_PERSON){
+    saved_state = current_state;
+    current_state = FOUND_OBJECT;
+    transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
+    transform_robot_to_world_coords(rx, ry, &wx, &wy);
+    transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
+  }
 
-  if (sparki.edgeLeft() < 700){
+  if (sparki.edgeLeft() < IR_THRESHOLD){
     sparki.moveRight(1);
     pose_theta -= to_radians(1);
   }
 
-  if (sparki.edgeRight() < 700){
+  if (sparki.edgeRight() < IR_THRESHOLD){
     sparki.moveLeft(1);
     pose_theta += to_radians(1);
   }
@@ -138,16 +152,17 @@ void loop() {
 
       if (path_next == -1){
         if (goal_floor == 0 && goal_idx == EXIT_IDX){
-          // TODO check if we have more people to save
-          /* 
-          open the gripper and drop a person, if any, safely outside
-          if (there are more people to save){
-            set goal to be the next person to save
-            current_state = PATH_PLANNING
+          gripperOpen();
+          byte* next_target = getNextTarget(); // TODO write this function
+          if (next_target == NULL){
+            goal_i = next_target[0];
+            goal_j = next_target[1];
+            goal_floor = next_target[2];
+            delete next_target;
+            current_state = PATH_PLANNING;
           }
           else
-            current_state = FINISHED
-          */
+            current_state = FINISHED;
         }
         else
           current_state = FIND_PERSON;
@@ -173,52 +188,36 @@ void loop() {
       break;
 
     case PATH_FOLLOWING:
-    {
-      bool path_valid = true;
-      // if (any objects put on map at start of loop) TODO
-        // iterate through path array
-        // if (object(s) occupy a square that's part of the path that we're not past)
-          // path_valid = false;
-
-      if (path_valid){
-        compute_IK_errors();
-        compute_IK_wheel_rotations();
-        if (is_robot_at_IK_destination_pose()){
-          moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
-          current_state = PATH_FINDING_NEXT; 
-        }
-        else{
-          set_IK_motor_rotations();
-        }
+      compute_IK_errors();
+      compute_IK_wheel_rotations();
+      if (is_robot_at_IK_destination_pose()){
+        moveStop(); // stop for a second and think so that our odometry doesn't get out of whack
+        current_state = PATH_FINDING_NEXT; 
       }
-      else
-        current_state = PATH_PLANNING;
+      else{
+        set_IK_motor_rotations();
+      }
       break;
-    }
 
     case IN_ELEVATOR:
       moveStop();
-
-      /*
-       * TODO
-       * Use bluetooh remote here
-       * Wait(5000) for map change-out
-       * potentially also just wait until remote feedback 
-       * 
-       */
-
+      useElevator(); // TODO block until remote says we're on the right floor
       pose_floor = goal_floor;
       current_state = PATH_PLANNING;
       break;
 
-    case FOUND_OBJECT:
+    case FOUND_OBJECT: {
       moveStop();
+      byte object_type = differentiateObject(); // TODO write this function; may need to pass in flame_detected...
 
-      if (flame_detected != 0){ // can also add a call to the remote if this doesn't work well
+      if (object_type == 255){
         current_state = CARRY_PERSON;
       }
+      else if (object_type == 0){
+        current_state = saved_state;
+      }
       else {
-        world_map[obj_i][obj_j][pose_floor] = (world_map[obj_i][obj_j][pose_floor] & UPPER_HALF) | (FIRE & LOWER_HALF);
+        world_map[obj_i][obj_j][pose_floor] = (world_map[obj_i][obj_j][pose_floor] & UPPER_HALF) | (object_type & LOWER_HALF);
         bool path_blocked = false, sparki_found = false;
         byte obj_idx = ij_coordinates_to_vertex_index(obj_i, obj_j);
         for (byte path_iter = 0; path[path_iter] != -1; path_iter++){
@@ -234,6 +233,7 @@ void loop() {
         else
           current_state = saved_state;
       }
+    }
       
     break;
 
@@ -262,9 +262,7 @@ void loop() {
       moveForward();
       if (ping_dist <= SPARKI_GRAB_DISTANCE && ping_dist != -1){
         moveStop();
-        sparki.gripperClose();
-        delay(SPARKI_GRIP_TIME);
-        sparki.gripperStop();
+        gripperClose();
         goal_i = 0;
         goal_j = 0;
         goal_floor = 0;
@@ -274,7 +272,7 @@ void loop() {
 
     case FINISHED:
       // Saved everybody that we meant to save, or encountered some other "completion" condition.
-      // Probably does nothing.
+      // Probably does nothing. We could also flash the LED or whatnot.
 
       break;
     
@@ -283,12 +281,13 @@ void loop() {
       // We could use the controller here to manually transition to another state,
       // f.e. one that clears Sparki's current odometry information and assumes him
       // to be at the building entrance. TODO
+      sparki.RGB(RGB_RED);
 
       break;
   }
 
   // Always update the LCD: only call this here to avoid anomalous behavior
-  // sparki.updateLCD();
+  sparki.updateLCD();
 
   // Check how long to delay, so that we take some time between cycles
   end_time = millis();
