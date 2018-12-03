@@ -47,8 +47,8 @@ const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 // Map locations
 #define EXIT_IDX 0
 #define ELEVATOR_IDX 35
-#define INITIAL_GOAL_I 5
-#define INITIAL_GOAL_J 5
+#define INITIAL_GOAL_I 3
+#define INITIAL_GOAL_J 1
 #define INITIAL_GOAL_FLOOR 0
 
 // Cell types

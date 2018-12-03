@@ -72,7 +72,7 @@ void set_IK_motor_rotations() {
     left_wheel_rotating = FWD;
   } else {
     left_speed_pct = 0.;
-    left_wheel_rotating = 0;
+    left_wheel_rotating = NONE;
   }
 
   if (phi_r < 0) {
@@ -83,7 +83,7 @@ void set_IK_motor_rotations() {
     right_wheel_rotating = FWD;
   } else {
     right_speed_pct = 0.;
-    right_wheel_rotating = 0;
+    right_wheel_rotating = NONE;
   }
 
   sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
