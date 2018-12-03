@@ -17,7 +17,7 @@
 #define W_NSEW  0b11110000
 #define W_0     0b00000000
 
-int types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
+byte types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
   {EXIT,  FREE,   FREE,   FREE,   FREE,   FREE,
    FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
    FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
@@ -32,7 +32,7 @@ int types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
    FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
    FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
 };
-int walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
+byte walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
   {W_S,   W_S,    W_S,    W_NS,   W_NS,   W_SE,
    W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
    W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
@@ -53,7 +53,7 @@ int walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
 /* Call this function to initialize the map */
 void map_create(){
   
-  int i; int j; int k; int t; int w;
+  byte i; byte j; byte k; byte t; byte w;
   
   for(k = 0; k < NUM_FLOORS; k++){
     t = 0; w = 0;
@@ -111,19 +111,19 @@ void map_create(){
 
 //**CELL CREATION**//
 
-void cell_settype(int i, int j, int k, int type){
+void cell_settype(byte i, byte j, byte k, byte type){
   world_map[i][j][k] = (type & 0b00001111) | (world_map[i][j][k] & 0b11110000);
 }
 
-void cell_setwalls(int i, int j, int k, int wallbits){
+void cell_setwalls(byte i, byte j, byte k, byte wallbits){
   world_map[i][j][k] = (wallbits & 0b11110000) | (world_map[i][j][k] & 0b00001111);
 }
 
-void cell_batchsettype(int i, int j, int k, int type, int num){
+void cell_batchsettype(byte i, byte j, byte k, byte type, byte num){
   //TODO: fill in function
 }
 
-void cell_make(int i, int j, int k, int type, int wallbits){
+void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
   // Set Cell Type
   if(type != -1){ // Pass in -1 as type to leave type as-is
     world_map[i][j][k] = (type & 0b00001111) | (world_map[i][j][k] & 0b11110000);
@@ -170,30 +170,30 @@ void cell_make(int i, int j, int k, int type, int wallbits){
   }
 }
 
-//**CELL INTERACTION**//
+//**CELL byteERACTION**//
 
-int cell_gettype(int i, int j, int k){
-  int type = world_map[i][j][k] & 0b00001111;
+byte cell_gettype(byte i, byte j, byte k){
+  byte type = world_map[i][j][k] & 0b00001111;
   return type;
 }
 
-bool cell_isfree(int i, int j, int k){
+bool cell_isfree(byte i, byte j, byte k){
   return !(world_map[i][j][k] & LOWER_HALF);
 }
 
-bool cell_haswall_N(int i, int j, int k){
+bool cell_haswall_N(byte i, byte j, byte k){
   return (world_map[i][j][k] & W_N);
 }
 
-bool cell_haswall_S(int i, int j, int k){
+bool cell_haswall_S(byte i, byte j, byte k){
   return (world_map[i][j][k] & W_S);
 }
 
-bool cell_haswall_E(int i, int j, int k){
+bool cell_haswall_E(byte i, byte j, byte k){
   return (world_map[i][j][k] & W_E);
 }
 
-bool cell_haswall_W(int i, int j, int k){
+bool cell_haswall_W(byte i, byte j, byte k){
   return (world_map[i][j][k] & W_W);
 }
 
