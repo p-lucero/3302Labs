@@ -101,6 +101,16 @@ void loop() {
   //   transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
   // }
 
+  if (sparki.edgeLeft() < 700){
+    sparki.moveRight(1);
+    pose_theta -= to_radians(1);
+  }
+
+  if (sparki.edgeRight() < 700){
+    sparki.moveLeft(1);
+    pose_theta += to_radians(1);
+  }
+
   switch (current_state){
     case PATH_PLANNING:
       if (path != NULL){

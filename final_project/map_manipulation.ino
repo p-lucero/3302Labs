@@ -1,8 +1,5 @@
 #include "final_project.h"
 
-// TODO fill this file with functions that deal with anything map related
-// f.e. getting/setting information about a cell in the map
-
 // Wallbits
 #define W_N     0b10000000
 #define W_S     0b01000000
@@ -20,8 +17,36 @@
 #define W_NSEW  0b11110000
 #define W_0     0b00000000
 
-
-//byte map[MAP_SIZE_X][MAP_SIZE_Y][MAP_SIZE_Z]; //3d byte array. Z corresponds to number of floors in building
+int types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
+  {EXIT,  FREE,   FREE,   FREE,   FREE,   FREE,
+   FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
+   FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
+   FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
+   OFFICE,ENTRY,  OFFICE, OFFICE, FREE,   FREE,
+   OFFICE,OFFICE, OFFICE, OFFICE, OBJECT, ELEVATOR}, // FLOOR 1
+  
+  {OFFICE,OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
+   ENTRY, OFFICE, ENTRY,  OFFICE, OFFICE, FREE,
+   FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
+   FREE,  OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
+   FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
+   FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
+};
+int walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
+  {W_S,   W_S,    W_S,    W_NS,   W_NS,   W_SE,
+   W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
+   W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
+   W_NW,  W_S,    W_NS,   W_NS,   W_S,    W_E,
+   W_SW,  W_0,    W_S,    W_SE,   W_NW,   W_E,
+   W_NW,  W_N,    W_N,    W_NE,   W_NSEW, W_NEW}, // FLOOR 1
+  
+  {W_SW,  W_SE,   W_SW,   W_S,   W_S,   W_SE,
+   W_W,   W_NE,   W_W,    W_N,   W_NE,  W_EW,
+   W_W,   W_NS,   W_N,    W_NS,  W_S,   W_E,
+   W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
+   W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
+   W_NW,  W_NS,   W_NS,   W_NS,  W_NS,  W_NE}  // FLOOR 2
+};
 
 //**MAP BUILDING**//
 
@@ -29,37 +54,6 @@
 void map_create(){
   
   int i; int j; int k; int t; int w;
-  int types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] = {
-    {EXIT,  FREE,   FREE,   FREE,   FREE,   FREE,
-     FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
-     FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
-     FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
-     OFFICE,ENTRY,  OFFICE, OFFICE, FREE,   FREE,
-     OFFICE,OFFICE, OFFICE, OFFICE, OBJECT, ELEVATOR}, // FLOOR 1
-    
-    {OFFICE,OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
-     ENTRY, OFFICE, ENTRY,  OFFICE, OFFICE, FREE,
-     FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
-     FREE,  OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
-     FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
-     FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
-  };
-  int walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] = {
-    {W_S,   W_S,    W_S,    W_NS,   W_NS,   W_SE,
-     W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
-     W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
-     W_NW,  W_S,    W_NS,   W_NS,   W_S,    W_E,
-     W_SW,  W_0,    W_S,    W_SE,   W_NW,   W_E,
-     W_NW,  W_N,    W_N,    W_NE,   W_NSEW, W_NEW}, // FLOOR 1
-    
-    {W_SW,  W_SE,   W_SW,   W_S,   W_S,   W_SE,
-     W_W,   W_NE,   W_W,    W_N,   W_NE,  W_EW,
-     W_W,   W_NS,   W_N,    W_NS,  W_S,   W_E,
-     W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
-     W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
-     W_NW,  W_NS,   W_NS,   W_NS,  W_NS,  W_NE}  // FLOOR 2
-  };
-  
   
   for(k = 0; k < NUM_FLOORS; k++){
     t = 0; w = 0;
@@ -140,7 +134,7 @@ void cell_make(int i, int j, int k, int type, int wallbits){
   // Doubling Walls
   if(wallbits & W_N){ // Wall added to the North
     if(j+1 < NUM_Y_CELLS){ // NOT an edge case
-      world_map[i][j+1][k] = (W_S & 0b11110000) | (world_map[i][j+1][k] & 0b00001111);
+      world_map[i][j+1][k] = (W_S | (world_map[i][j+1][k] & 0b11110000)) | (world_map[i][j+1][k] & 0b00001111);
     }
     else{
       return;
@@ -148,7 +142,7 @@ void cell_make(int i, int j, int k, int type, int wallbits){
   }
   if(wallbits & W_S){ // Wall added to the South
     if(j-1 >= 0){ // NOT an edge case
-      world_map[i][j-1][k] = (W_N & 0b11110000) | (world_map[i][j-1][k] & 0b00001111);
+      world_map[i][j-1][k] = (W_N | (world_map[i][j-1][k] & 0b11110000)) | (world_map[i][j-1][k] & 0b00001111);
     }
     else{
       return;
@@ -156,7 +150,7 @@ void cell_make(int i, int j, int k, int type, int wallbits){
   }
   if(wallbits & W_E){ // Wall added to the East
     if(i+1 < NUM_X_CELLS){ // NOT an edge case
-      world_map[i+1][j][k] = (W_E & 0b11110000) | (world_map[i+1][j][k] & 0b00001111);
+      world_map[i+1][j][k] = (W_E | (world_map[i+1][j][k] & 0b11110000)) | (world_map[i+1][j][k] & 0b00001111);
     }
     else{
       return;
@@ -164,7 +158,7 @@ void cell_make(int i, int j, int k, int type, int wallbits){
   }
   if(wallbits & W_W){ // Wall added to the West
     if(i-1 >= 0){ // NOT an edge case
-      world_map[i-1][j][k] = (W_W & 0b11110000) | (world_map[i-1][j][k] & 0b00001111);
+      world_map[i-1][j][k] = (W_W | (world_map[i-1][j][k] & 0b11110000)) | (world_map[i-1][j][k] & 0b00001111);
     }
     else{
       return;
