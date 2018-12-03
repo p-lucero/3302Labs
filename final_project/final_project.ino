@@ -46,9 +46,7 @@ void setup() {
   pinMode(FLAME_SENSOR, INPUT);
   map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
-  sparki.gripperOpen();
-  delay(5000);
-  sparki.gripperStop();
+  gripperOpen();
   current_state = PATH_PLANNING;
   goal_i = INITIAL_GOAL_I;
   goal_j = INITIAL_GOAL_J;
@@ -70,14 +68,14 @@ void displayOdometrySerial() {
 void gripperOpen(){
   moveStop();
   sparki.gripperOpen();
-  delay(5000);
+  delay(SPARKI_GRIP_TIME);
   sparki.gripperStop();
 }
 
 void gripperClose(){
   moveStop();
   sparki.gripperClose();
-  delay(5000);
+  delay(SPARKI_GRIP_TIME);
   sparki.gripperStop();
 }
 
@@ -153,7 +151,7 @@ void loop() {
       if (path_next == -1){
         if (goal_floor == 0 && goal_idx == EXIT_IDX){
           gripperOpen();
-          byte* next_target = getNextTarget(); // TODO write this function
+          byte* next_target = getNextTarget();
           if (next_target == NULL){
             goal_i = next_target[0];
             goal_j = next_target[1];
@@ -201,14 +199,14 @@ void loop() {
 
     case IN_ELEVATOR:
       moveStop();
-      useElevator(); // TODO block until remote says we're on the right floor
+      useElevator();
       pose_floor = goal_floor;
       current_state = PATH_PLANNING;
       break;
 
     case FOUND_OBJECT: {
       moveStop();
-      byte object_type = differentiateObject(); // TODO write this function; may need to pass in flame_detected...
+      byte object_type = differentiateObject();
 
       if (object_type == 255){
         current_state = CARRY_PERSON;

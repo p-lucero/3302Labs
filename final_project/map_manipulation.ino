@@ -59,7 +59,7 @@ void map_create(){
     t = 0; w = 0;
     for(j = 0; j < NUM_Y_CELLS; j++){
       for(i = 0; i < NUM_X_CELLS; i++){
-        cell_make(i, j, k, types[k][t], walls[k][w]);
+        cell_make(i, j, k, types[k][t], walls[k][w]); // FIXME this may break since we've put walls and types in progmem
         t++;
         w++;
       }

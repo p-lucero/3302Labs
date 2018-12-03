@@ -16,7 +16,7 @@
 // | 66  82  74 |
 // \____________/
 
-int numpad[10] PROGMEM = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74};
+int numpad[10] = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74}; // TODO this could go into progmem but would require rewriting find_num
 
 void flash(byte r, byte g, byte b)
 {
@@ -41,19 +41,70 @@ int find_num(byte code)
 
 void useElevator(){
   // block until Sparki receives a command that tells him he's in the elevator
-
+  sparki.rgb(RGB_GREEN);
+  int code = 0;
+  while (code != 13){
+    delay(50);
+    code = sparki.readIR();
+  }
+  sparki.rgb(RGB_OFF);
 }
 
 byte differentiateObject(){
   // block until Sparki receives a command that tells him what object he's looking at
   // returns 0 for false alarm, 255 for person, and the cell type for if it's an actual object
-
+  int code = 0;
+  int code_num = 0;
+  byte retval = 128;
+  sparki.rgb(RGB_RED);
+  while (true){
+    delay(50);
+    code = sparki.readIR();
+    code_num = find_num(code);
+    if (code_num != -1){
+      retval = code_num; // user has inputted a number, infer to be cell type (covers false alarm)
+      break;
+    }
+    else if (code == 13){
+      retval = 255;
+      break;
+    }
+  }
+  sparki.rgb(RGB_OFF);
+  return retval;
 }
 
 byte* getNextTarget(){
   // block until Sparki receives commands detailing his next target or if he's done
   // returns NULL if done, or an array of three bytes representing the next coordinates to search
-
+  sparki.rgb(RGB_BLUE);
+  int code = 0;
+  int code_num = 0;
+  byte* retval = NULL;
+  while(true){
+    delay(50);
+    code = sparki.readIR();
+    code_num = find_num(code);
+    if (code == 22)
+      break; // return NULL, there is no next target
+    else if (code == 13){ // find out the next target
+      retval = new byte[3];
+      byte counter = 0;
+      while(counter < 3){
+        sparki.rgb(0, 0, (counter + 1) * 25); // scale RGB based on the current status of counter
+        delay(50);
+        code = sparki.readIR();
+        code_num = find_num(code);
+        if (code_num != -1){
+          retval[counter] = code_num;
+          counter++;
+        }
+      }
+      break;
+    }
+  }
+  sparki.rgb(RGB_OFF);
+  return retval;
 }
 
 // for reference
