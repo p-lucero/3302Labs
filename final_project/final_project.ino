@@ -52,11 +52,24 @@ void setup() {
   goal_floor = INITIAL_GOAL_FLOOR;
 }
 
+void displayOdometrySerial() {
+  Serial.print("X: "); Serial.print(pose_x); Serial.print(" Xg: "); Serial.println(dest_pose_x);
+  Serial.print("Y: "); Serial.print(pose_y); Serial.print(" Yg: "); Serial.println(dest_pose_y); 
+  Serial.print("T: "); Serial.print(pose_theta*180./M_PI); Serial.print(" Tg: "); Serial.println(dest_pose_theta*180./M_PI);
+
+//  Serial.print("dX : "); Serial.print(dX ); Serial.print("   dT: "); Serial.println(dTheta);
+  Serial.print("phl: "); Serial.print(phi_l); Serial.print(" phr: "); Serial.println(phi_r);
+  Serial.print("p: "); Serial.print(d_err); Serial.print(" a: "); Serial.println(to_degrees(b_err));
+  Serial.print("h: "); Serial.println(to_degrees(h_err));  
+  Serial.print("s: "); Serial.println(current_state);
+}
+
 void loop() {
   // Clear the LCD of whatever was present last cycle
   // Set up bookkeeping variables; add whatever you need to this set of declarations
   sparki.RGB(RGB_OFF);
-  sparki.clearLCD();
+  // sparki.clearLCD();
+  displayOdometrySerial();
   unsigned long begin_time = millis(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
   int ping_dist, flame_detected;
@@ -65,7 +78,7 @@ void loop() {
   flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry((begin_time - last_cycle_time) / 1000.0);
-  displayOdometry();
+  // displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
@@ -262,7 +275,7 @@ void loop() {
   }
 
   // Always update the LCD: only call this here to avoid anomalous behavior
-  sparki.updateLCD();
+  // sparki.updateLCD();
 
   // Check how long to delay, so that we take some time between cycles
   end_time = millis();
