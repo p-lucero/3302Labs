@@ -27,6 +27,51 @@
 
 /* Call this function to initialize the map */
 void map_create(){
+  
+  int i; int j; int k; int t; int w;
+  int types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] = {
+    {EXIT,  FREE,   FREE,   FREE,   FREE,   FREE,
+     FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
+     FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
+     FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
+     OFFICE,ENTRY,  OFFICE, OFFICE, FREE,   FREE,
+     OFFICE,OFFICE, OFFICE, OFFICE, OBJECT, ELEVATOR}, // FLOOR 1
+    
+    {OFFICE,OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
+     ENTRY, OFFICE, ENTRY,  OFFICE, OFFICE, FREE,
+     FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
+     FREE,  OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
+     FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
+     FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
+  };
+  int walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] = {
+    {W_S,   W_S,    W_S,    W_NS,   W_NS,   W_SE,
+     W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
+     W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
+     W_NW,  W_S,    W_NS,   W_NS,   W_S,    W_E,
+     W_SW,  W_0,    W_S,    W_SE,   W_NW,   W_E,
+     W_NW,  W_N,    W_N,    W_NE,   W_NSEW, W_NEW}, // FLOOR 1
+    
+    {W_SW,  W_SE,   W_SW,   W_S,   W_S,   W_SE,
+     W_W,   W_NE,   W_W,    W_N,   W_NE,  W_EW,
+     W_W,   W_NS,   W_N,    W_NS,  W_S,   W_E,
+     W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
+     W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
+     W_NW,  W_NS,   W_NS,   W_NS,  W_NS,  W_NE}  // FLOOR 2
+  };
+  
+  
+  for(k = 0; k < NUM_FLOORS; k++){
+    t = 0; w = 0;
+    for(j = 0; j < NUM_Y_CELLS; j++){
+      for(i = 0; i < NUM_X_CELLS; i++){
+        cell_make(i, j, k, types[k][t], walls[k][w]);
+        t++;
+        w++;
+      }
+    }
+  }
+  /* OLD METHOD - WRONG STUFF ANYWAY - KEEP AS REFERENCE
   // Configuring First Floor K=0
   cell_make(0, 0, 0, EXIT, W_S);
   cell_make(0, 1, 0, FREE, W_S);
@@ -34,16 +79,16 @@ void map_create(){
   cell_make(0, 3, 0, FREE, W_NS);
   cell_make(0, 4, 0, FREE, W_NS);
   cell_make(0, 5, 0, FREE, W_SE);
-  cell_make(1, 0, 0, FREE, W_SE);
+  cell_make(1, 0, 0, FREE, W_W);
   cell_make(1, 1, 0, OBJECT, W_0);
   cell_make(1, 2, 0, ENTRY, W_E);
   cell_make(1, 3, 0, OFFICE, W_SW);
   cell_make(1, 4, 0, ENTRY, W_S);
   cell_make(1, 5, 0, FREE, W_E);
-  cell_make(2, 0, 0, FREE, W_S);
+  cell_make(2, 0, 0, FREE, W_W);
   cell_make(2, 1, 0, OBJECT, W_N);
   cell_make(2, 2, 0, OFFICE, W_NE);
-  cell_make(2, 3, 0, EXIT, W_S);
+  cell_make(2, 3, 0, OFFICE, W_S);
   cell_make(2, 4, 0, OFFICE, W_NW);
   cell_make(2, 5, 0, FREE, W_EW);
   cell_make(3, 0, 0, FREE, W_NW);
@@ -66,7 +111,7 @@ void map_create(){
   cell_make(5, 5, 0, ELEVATOR, W_NE);
   
   // Configuring 2nd Floor K=1
-  
+  */
 }
 
 

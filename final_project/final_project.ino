@@ -31,14 +31,14 @@ void moveStop();
 bool is_robot_at_IK_destination_pose();
 
 // IK and odometry variables
-float pose_x = 0., pose_y = 0., pose_theta = 0.;
+float pose_x = CELL_RESOLUTION_X/2, pose_y = CELL_RESOLUTION_Y/2, pose_theta = 0.;
 float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
 float d_err = 0., b_err =  0., h_err = 0., phi_l = 0., phi_r = 0.;
 float left_speed_pct = 0., right_speed_pct = 0.;
-byte left_dir, right_dir, left_wheel_rotating = NONE, right_wheel_rotating = NONE;
+short left_dir, right_dir, left_wheel_rotating = NONE, right_wheel_rotating = NONE;
 byte pose_floor = 0;
 byte dest_i, dest_j, goal_i, goal_j, goal_floor;
-unsigned long last_cycle_time;
+unsigned long last_cycle_time = 0;
 
 short* path = NULL;
 
@@ -46,17 +46,33 @@ void setup() {
   pinMode(FLAME_SENSOR, INPUT);
   map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
+  sparki.gripperOpen();
+  delay(5000);
+  sparki.gripperStop();
   current_state = PATH_PLANNING;
   goal_i = INITIAL_GOAL_I;
   goal_j = INITIAL_GOAL_J;
   goal_floor = INITIAL_GOAL_FLOOR;
 }
 
+void displayOdometrySerial() {
+  Serial.print("X: "); Serial.print(pose_x); Serial.print(" Xg: "); Serial.println(dest_pose_x);
+  Serial.print("Y: "); Serial.print(pose_y); Serial.print(" Yg: "); Serial.println(dest_pose_y); 
+  Serial.print("T: "); Serial.print(pose_theta*180./M_PI); Serial.print(" Tg: "); Serial.println(dest_pose_theta*180./M_PI);
+
+//  Serial.print("dX : "); Serial.print(dX ); Serial.print("   dT: "); Serial.println(dTheta);
+  Serial.print("phl: "); Serial.print(phi_l); Serial.print(" phr: "); Serial.println(phi_r);
+  Serial.print("p: "); Serial.print(d_err); Serial.print(" a: "); Serial.println(to_degrees(b_err));
+  Serial.print("h: "); Serial.println(to_degrees(h_err));  
+  Serial.print("s: "); Serial.println(current_state);
+}
+
 void loop() {
   // Clear the LCD of whatever was present last cycle
   // Set up bookkeeping variables; add whatever you need to this set of declarations
   sparki.RGB(RGB_OFF);
-  sparki.clearLCD();
+  // sparki.clearLCD();
+  displayOdometrySerial();
   unsigned long begin_time = millis(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
   int ping_dist, flame_detected;
@@ -65,7 +81,7 @@ void loop() {
   flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry((begin_time - last_cycle_time) / 1000.0);
-  displayOdometry();
+  // displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
@@ -76,14 +92,14 @@ void loop() {
   // FIXME these may be unreliable, but I'd really rather not use their ping() implementation
   // may be worth copying it and coding our own that doesn't utilize a 20ms delay between each ping?
   // while also taking the best value. merits testing to see if it's necessary.
-  ping_dist = sparki.ping_single(); 
-  if (ping_dist != -1 && current_state != FIND_PERSON && current_state != CARRY_PERSON){
-    saved_state = current_state;
-    current_state = FOUND_OBJECT;
-    transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
-    transform_robot_to_world_coords(rx, ry, &wx, &wy);
-    transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
-  }
+  // ping_dist = sparki.ping_single(); 
+  // if (ping_dist != -1 && ping_dist < 12 && current_state != FIND_PERSON && current_state != CARRY_PERSON){
+  //   saved_state = current_state;
+  //   current_state = FOUND_OBJECT;
+  //   transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
+  //   transform_robot_to_world_coords(rx, ry, &wx, &wy);
+  //   transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
+  // }
 
   switch (current_state){
     case PATH_PLANNING:
@@ -152,7 +168,7 @@ void loop() {
       // if (any objects put on map at start of loop) TODO
         // iterate through path array
         // if (object(s) occupy a square that's part of the path that we're not past)
-          path_valid = false;
+          // path_valid = false;
 
       if (path_valid){
         compute_IK_errors();
@@ -262,7 +278,7 @@ void loop() {
   }
 
   // Always update the LCD: only call this here to avoid anomalous behavior
-  sparki.updateLCD();
+  // sparki.updateLCD();
 
   // Check how long to delay, so that we take some time between cycles
   end_time = millis();

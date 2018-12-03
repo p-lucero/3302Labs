@@ -72,7 +72,7 @@ void set_IK_motor_rotations() {
     left_wheel_rotating = FWD;
   } else {
     left_speed_pct = 0.;
-    left_wheel_rotating = 0;
+    left_wheel_rotating = NONE;
   }
 
   if (phi_r < 0) {
@@ -83,7 +83,7 @@ void set_IK_motor_rotations() {
     right_wheel_rotating = FWD;
   } else {
     right_speed_pct = 0.;
-    right_wheel_rotating = 0;
+    right_wheel_rotating = NONE;
   }
 
   sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
@@ -95,15 +95,15 @@ bool is_robot_at_IK_destination_pose() {
 }
 
 void displayOdometry() {
-  sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
-  sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
-  sparki.print("T: "); sparki.print(pose_theta*180./M_PI); sparki.print(" Tg: "); sparki.println(dest_pose_theta*180./M_PI);
+//   sparki.print("X: "); sparki.print(pose_x); sparki.print(" Xg: "); sparki.println(dest_pose_x);
+//   sparki.print("Y: "); sparki.print(pose_y); sparki.print(" Yg: "); sparki.println(dest_pose_y); 
+//   sparki.print("T: "); sparki.print(pose_theta*180./M_PI); sparki.print(" Tg: "); sparki.println(dest_pose_theta*180./M_PI);
 
-//  sparki.print("dX : "); sparki.print(dX ); sparki.print("   dT: "); sparki.println(dTheta);
-  sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
-  sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
-  sparki.print("h: "); sparki.println(to_degrees(h_err));  
-  sparki.print("s: "); sparki.println(current_state);
+// //  sparki.print("dX : "); sparki.print(dX ); sparki.print("   dT: "); sparki.println(dTheta);
+//   sparki.print("phl: "); sparki.print(phi_l); sparki.print(" phr: "); sparki.println(phi_r);
+//   sparki.print("p: "); sparki.print(d_err); sparki.print(" a: "); sparki.println(to_degrees(b_err));
+//   sparki.print("h: "); sparki.println(to_degrees(h_err));  
+//   sparki.print("s: "); sparki.println(current_state);
 }
 
 //lab 6 odometry except it takes a parameter based on our cycle timme instead of a constant
