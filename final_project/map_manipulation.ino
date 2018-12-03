@@ -53,7 +53,7 @@ void map_create(){
      W_NW,  W_N,    W_N,    W_NE,   W_NSEW, W_NEW}, // FLOOR 1
     
     {W_SW,  W_SE,   W_SW,   W_S,   W_S,   W_SE,
-     W_W,   W_NE,   W_W,    W_N,   W_NE,  W_WE,
+     W_W,   W_NE,   W_W,    W_N,   W_NE,  W_EW,
      W_W,   W_NS,   W_N,    W_NS,  W_S,   W_E,
      W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
      W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
