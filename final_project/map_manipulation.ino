@@ -1,5 +1,7 @@
 #include "final_project.h"
 
+#include <avr/pgmspace.h> // maybe unnecessary
+
 // Wallbits
 #define W_N     0b10000000
 #define W_S     0b01000000
@@ -53,15 +55,17 @@ byte walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
 /* Call this function to initialize the map */
 void map_create(){
   
-  byte i; byte j; byte k; byte t; byte w;
+  byte i; byte j; byte k; byte t;
+  byte curr_type, curr_wall;
   
   for(k = 0; k < NUM_FLOORS; k++){
-    t = 0; w = 0;
+    t = 0;
     for(j = 0; j < NUM_Y_CELLS; j++){
       for(i = 0; i < NUM_X_CELLS; i++){
-        cell_make(i, j, k, types[k][t], walls[k][w]); // FIXME this may break since we've put walls and types in progmem
+        curr_type = pgm_read_byte_near(types + (k * NUM_X_CELLS * NUM_Y_CELLS) + t);
+        curr_wall = pgm_read_byte_near(walls + (k * NUM_X_CELLS * NUM_Y_CELLS) + t);
+        cell_make(i, j, k, curr_type, curr_wall);
         t++;
-        w++;
       }
     }
   }

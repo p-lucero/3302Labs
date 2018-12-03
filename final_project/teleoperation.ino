@@ -41,13 +41,13 @@ int find_num(byte code)
 
 void useElevator(){
   // block until Sparki receives a command that tells him he's in the elevator
-  sparki.rgb(RGB_GREEN);
+  sparki.RGB(RGB_GREEN);
   int code = 0;
   while (code != 13){
     delay(50);
     code = sparki.readIR();
   }
-  sparki.rgb(RGB_OFF);
+  sparki.RGB(RGB_OFF);
 }
 
 byte differentiateObject(){
@@ -56,7 +56,7 @@ byte differentiateObject(){
   int code = 0;
   int code_num = 0;
   byte retval = 128;
-  sparki.rgb(RGB_RED);
+  sparki.RGB(RGB_RED);
   while (true){
     delay(50);
     code = sparki.readIR();
@@ -70,14 +70,14 @@ byte differentiateObject(){
       break;
     }
   }
-  sparki.rgb(RGB_OFF);
+  sparki.RGB(RGB_OFF);
   return retval;
 }
 
 byte* getNextTarget(){
   // block until Sparki receives commands detailing his next target or if he's done
   // returns NULL if done, or an array of three bytes representing the next coordinates to search
-  sparki.rgb(RGB_BLUE);
+  sparki.RGB(RGB_BLUE);
   int code = 0;
   int code_num = 0;
   byte* retval = NULL;
@@ -91,7 +91,7 @@ byte* getNextTarget(){
       retval = new byte[3];
       byte counter = 0;
       while(counter < 3){
-        sparki.rgb(0, 0, (counter + 1) * 25); // scale RGB based on the current status of counter
+        sparki.RGB(0, 0, (counter + 1) * 25); // scale RGB based on the current status of counter
         delay(50);
         code = sparki.readIR();
         code_num = find_num(code);
@@ -103,7 +103,7 @@ byte* getNextTarget(){
       break;
     }
   }
-  sparki.rgb(RGB_OFF);
+  sparki.RGB(RGB_OFF);
   return retval;
 }
 
