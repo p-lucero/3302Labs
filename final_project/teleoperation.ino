@@ -16,7 +16,7 @@
 // | 66  82  74 |
 // \____________/
 
-int numpad[10] = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74}; // TODO this could go into progmem but would require rewriting find_num
+int * numpad; // TODO this could go into progmem but would require rewriting find_num
 
 // void flash(byte r, byte g, byte b)
 // {
@@ -31,6 +31,7 @@ int numpad[10] = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74}; // TODO this could go 
 
 int find_num(byte code)
 {
+  int numpad [] = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74};
   for (byte i = 0; i<10; i++)
   {
     if (numpad[i] == code)
