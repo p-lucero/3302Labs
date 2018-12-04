@@ -23,8 +23,45 @@ const float CELL_RESOLUTION_Y = MAP_SIZE_Y / NUM_Y_CELLS; // Line following map 
 // state machine control variables; prefer byte over int, since it's more efficient
 byte current_state;
 
-// World map
-byte world_map[NUM_X_CELLS][NUM_Y_CELLS][NUM_FLOORS];
+// EXPERIMENTAL REDEFINITION OF WORLD MAP
+byte world_map[NUM_X_CELLS][NUM_Y_CELLS][NUM_FLOORS] = {
+  EXIT | W_S, OFFICE | W_SW, // 0, 0
+  FREE | W_W, ENTRY | W_W, // 0, 1, etc
+  FREE | W_W, FREE | W_W,
+  FREE | W_NW, FREE | W_EW,
+  OFFICE | W_SW, FREE | W_W,
+  OFFICE | W_NW, FREE | W_NW,
+  FREE | W_S, OFFICE | W_SE, // 1, 0
+  OBJECT | W_0, OFFICE | W_NE, 
+  OBJECT | W_N, FREE | W_NS,
+  FREE | W_S, OFFICE | W_SW, 
+  ENTRY | W_0, ENTRY | W_N, 
+  OFFICE | W_N, FREE | W_NS,
+  FREE | W_S, OFFICE | W_SW, // 2, 0
+  ENTRY | W_E, ENTRY | W_W, 
+  OFFICE | W_NE, FREE | W_N,
+  FREE | W_NS, OFFICE | W_SE, 
+  OFFICE | W_S, OFFICE | W_NE, 
+  OFFICE | W_N, FREE | W_NS,
+  FREE | W_NS, OFFICE | W_S, // 3, 0
+  OFFICE | W_SW, OFFICE | W_N, 
+  OFFICE | W_NW, FREE | W_NS,
+  FREE | W_NS, OFFICE | W_SW, 
+  OFFICE | W_SE, OFFICE | W_NW, 
+  OFFICE | W_NE, FREE | W_NS,
+  FREE | W_NS, ENTRY | W_S, // 4, 0
+  ENTRY | W_S, OFFICE | W_NE, 
+  OFFICE | W_NE, FREE | W_S,
+  FREE | W_S, ENTRY | W_E, 
+  FREE | W_NW, OFFICE | W_NE, 
+  OBJECT | W_NSEW, FREE | W_NS,
+  FREE | W_SE, FREE | W_SE, // 5, 0
+  FREE | W_E, FREE | W_EW, 
+  FREE | W_EW, FREE | W_E,
+  FREE | W_E, FREE | W_EW, 
+  FREE | W_E, FREE | W_EW, 
+  ELEVATOR | W_NEW, ELEVATOR | W_NE
+};
 
 // IK and odometry variables
 float pose_x = CELL_RESOLUTION_X/2, pose_y = CELL_RESOLUTION_Y/2, pose_theta = 0.;
@@ -41,7 +78,7 @@ short* path = NULL;
 void setup() {
   sparki.RGB(RGB_YELLOW);
   pinMode(FLAME_SENSOR, INPUT);
-  map_create();
+  // map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
   gripperOpen();
   current_state = PATH_PLANNING;
@@ -95,7 +132,7 @@ void loop() {
   flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
-  // displayOdometry();
+  displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
