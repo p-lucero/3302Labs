@@ -137,7 +137,7 @@ void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
   
   // Doubling Walls
   if(wallbits & W_N){ // Wall added to the North
-    if(j+1 < NUM_Y_CELLS){ // NOT an edge case
+    if(short(j)+1 < NUM_Y_CELLS){ // NOT an edge case
       world_map[i][j+1][k] = (W_S | (world_map[i][j+1][k] & 0b11110000)) | (world_map[i][j+1][k] & 0b00001111);
     }
     else{
@@ -145,7 +145,7 @@ void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
     }
   }
   if(wallbits & W_S){ // Wall added to the South
-    if(j-1 >= 0){ // NOT an edge case
+    if(short(j)-1 >= 0){ // NOT an edge case
       world_map[i][j-1][k] = (W_N | (world_map[i][j-1][k] & 0b11110000)) | (world_map[i][j-1][k] & 0b00001111);
     }
     else{
@@ -153,7 +153,7 @@ void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
     }
   }
   if(wallbits & W_E){ // Wall added to the East
-    if(i+1 < NUM_X_CELLS){ // NOT an edge case
+    if(short(i)+1 < NUM_X_CELLS){ // NOT an edge case
       world_map[i+1][j][k] = (W_E | (world_map[i+1][j][k] & 0b11110000)) | (world_map[i+1][j][k] & 0b00001111);
     }
     else{
@@ -161,7 +161,7 @@ void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
     }
   }
   if(wallbits & W_W){ // Wall added to the West
-    if(i-1 >= 0){ // NOT an edge case
+    if(short(i)-1 >= 0){ // NOT an edge case
       world_map[i-1][j][k] = (W_W | (world_map[i-1][j][k] & 0b11110000)) | (world_map[i-1][j][k] & 0b00001111);
     }
     else{

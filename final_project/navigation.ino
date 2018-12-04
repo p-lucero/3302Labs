@@ -77,11 +77,11 @@ byte get_travel_cost(byte vertex_source, byte vertex_dest, byte floor) {
     return BIG_NUMBER;
 
   // Which way are we going?
-  if (d_j - s_j == 1)
+  if (short(d_j) - short(s_j) == 1)
     travel_direction = NORTH;
-  else if (d_i - s_i == 1)
+  else if (short(d_i) - short(s_i) == 1)
     travel_direction = EAST;
-  else if (d_j - s_j == -1)
+  else if (short(d_j) - short(s_j) == -1)
     travel_direction = SOUTH;
   else
     travel_direction = WEST;
