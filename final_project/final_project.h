@@ -27,6 +27,7 @@
 #define PING_DIST_THRESHOLD 12 // FIXME
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
+const short CYCLE_TIME_US = CYCLE_TIME * 1000000;
 
 // Robot digital constants
 #define FWD 1

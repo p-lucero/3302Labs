@@ -26,10 +26,6 @@ byte current_state;
 // World map
 byte world_map[NUM_X_CELLS][NUM_Y_CELLS][NUM_FLOORS];
 
-void moveForward();
-void moveStop();
-bool is_robot_at_IK_destination_pose();
-
 // IK and odometry variables
 float pose_x = CELL_RESOLUTION_X/2, pose_y = CELL_RESOLUTION_Y/2, pose_theta = 0.;
 float dest_pose_x = 0., dest_pose_y = 0., dest_pose_theta = 0.;
@@ -84,14 +80,14 @@ void loop() {
   // Set up bookkeeping variables; add whatever you need to this set of declarations
   sparki.RGB(RGB_OFF);
   sparki.clearLCD();
-  unsigned long begin_time = millis(), end_time;
+  unsigned long begin_time = micros(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
   int ping_dist, flame_detected;
   float rx, ry, wx, wy;
 
   flame_detected = digitalRead(FLAME_SENSOR);
 
-  updateOdometry((begin_time - last_cycle_time) / 1000.0);
+  updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
   displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
@@ -149,6 +145,7 @@ void loop() {
 
       if (path_next == -1){
         if (goal_floor == 0 && goal_idx == EXIT_IDX){
+          moveStop();
           gripperOpen();
           byte* next_target = getNextTarget();
           if (next_target == NULL){
@@ -235,7 +232,7 @@ void loop() {
     break;
 
     case FIND_PERSON:
-      if (ping_dist != -1){
+      if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD){
         moveStop(); // just in case
         current_state = CARRY_PERSON;
       }
@@ -287,9 +284,9 @@ void loop() {
   sparki.updateLCD();
 
   // Check how long to delay, so that we take some time between cycles
-  end_time = millis();
-  if (end_time - begin_time < CYCLE_TIME_MS)
-    delay(CYCLE_TIME_MS - (end_time - begin_time));
+  end_time = micros();
+  if (abs(end_time - begin_time) < CYCLE_TIME_US)
+    delay(CYCLE_TIME_MS - abs(end_time - begin_time) / 1000);
   else
     delay(10);
   last_cycle_time = begin_time;
