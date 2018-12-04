@@ -1,6 +1,8 @@
 #ifndef FINAL_PROJECT_DEFINES
 #define FINAL_PROJECT_DEFINES
 
+#define DEBUG // Define me to enable debug stuff.
+
 // State machine defines
 #define PATH_PLANNING 0
 #define PATH_FINDING_NEXT 1
@@ -27,7 +29,7 @@
 #define PING_DIST_THRESHOLD 12 // FIXME
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
-const short CYCLE_TIME_US = CYCLE_TIME * 1000000;
+const int CYCLE_TIME_US = CYCLE_TIME * 1000000;
 
 // Robot digital constants
 #define FWD 1

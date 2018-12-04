@@ -21,34 +21,34 @@
 
 byte types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
   {EXIT,  FREE,   FREE,   FREE,   FREE,   FREE,
-   FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
-   FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
-   FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
-   OFFICE,ENTRY,  OFFICE, OFFICE, FREE,   FREE,
-   OFFICE,OFFICE, OFFICE, OFFICE, OBJECT, ELEVATOR}, // FLOOR 1
+      FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
+      FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
+      FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
+      OFFICE,ENTRY,  OFFICE, OFFICE, FREE,   FREE,
+      OFFICE,OFFICE, OFFICE, OFFICE, OBJECT, ELEVATOR}, // FLOOR 1
   
   {OFFICE,OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
-   ENTRY, OFFICE, ENTRY,  OFFICE, OFFICE, FREE,
-   FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
-   FREE,  OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
-   FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
-   FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
+       ENTRY, OFFICE, ENTRY,  OFFICE, OFFICE, FREE,
+       FREE,  FREE,   FREE,   FREE,   FREE,   FREE,
+       FREE,  OFFICE, OFFICE, OFFICE, ENTRY,  FREE,
+       FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
+       FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
 };
 byte walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
   {W_S,   W_S,    W_S,    W_NS,   W_NS,   W_SE,
-   W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
-   W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
-   W_NW,  W_S,    W_NS,   W_NS,   W_S,    W_E,
-   W_SW,  W_0,    W_S,    W_SE,   W_NW,   W_E,
-   W_NW,  W_N,    W_N,    W_NE,   W_NSEW, W_NEW}, // FLOOR 1
+     W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
+     W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
+     W_NW,  W_S,    W_NS,   W_NS,   W_S,    W_E,
+     W_SW,  W_0,    W_S,    W_SE,   W_NW,   W_E,
+     W_NW,  W_N,    W_N,    W_NE,   W_NSEW, W_NEW}, // FLOOR 1
   
   {W_SW,  W_SE,   W_SW,   W_S,   W_S,   W_SE,
-   W_W,   W_NE,   W_W,    W_N,   W_NE,  W_EW,
-   W_W,   W_NS,   W_N,    W_NS,  W_S,   W_E,
-   W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
-   W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
-   W_NW,  W_NS,   W_NS,   W_NS,  W_NS,  W_NE}  // FLOOR 2
-};
+       W_W,   W_NE,   W_W,    W_N,   W_NE,  W_EW,
+       W_W,   W_NS,   W_N,    W_NS,  W_S,   W_E,
+       W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
+       W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
+       W_NW,  W_NS,   W_NS,   W_NS,  W_NS,  W_NE}  // FLOOR 2
+}; // TODO convert this to storing directly in world_map, which will be less human-readable but will reenable LCD
 
 //**MAP BUILDING**//
 
@@ -62,8 +62,8 @@ void map_create(){
     t = 0;
     for(j = 0; j < NUM_Y_CELLS; j++){
       for(i = 0; i < NUM_X_CELLS; i++){
-        curr_type = pgm_read_byte_near(types + (k * NUM_X_CELLS * NUM_Y_CELLS) + t);
-        curr_wall = pgm_read_byte_near(walls + (k * NUM_X_CELLS * NUM_Y_CELLS) + t);
+        curr_type = pgm_read_byte_near(&types[k * NUM_X_CELLS * NUM_Y_CELLS + t]);
+        curr_wall = pgm_read_byte_near(&walls[k * NUM_X_CELLS * NUM_Y_CELLS + t]);
         cell_make(i, j, k, curr_type, curr_wall);
         t++;
       }

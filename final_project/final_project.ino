@@ -39,6 +39,7 @@ unsigned long last_cycle_time = 0;
 short* path = NULL;
 
 void setup() {
+  sparki.RGB(RGB_YELLOW);
   pinMode(FLAME_SENSOR, INPUT);
   map_create();
   sparki.servo(0); // ensure Sparki's looking forwards
@@ -47,6 +48,7 @@ void setup() {
   goal_i = INITIAL_GOAL_I;
   goal_j = INITIAL_GOAL_J;
   goal_floor = INITIAL_GOAL_FLOOR;
+  sparki.RGB(RGB_WHITE);
 }
 
 void displayOdometrySerial() {
@@ -81,14 +83,19 @@ void loop() {
   sparki.RGB(RGB_OFF);
   sparki.clearLCD();
   unsigned long begin_time = micros(), end_time;
-  byte sparki_i, sparki_j, sparki_idx, goal_idx, path_curr, path_next, path_2next, saved_state, obj_i, obj_j;
+  byte sparki_i, sparki_j, sparki_idx, goal_idx, saved_state, obj_i, obj_j;
+  short path_curr, path_next, path_2next;
   int ping_dist, flame_detected;
   float rx, ry, wx, wy;
+
+  #ifdef DEBUG
+  displayOdometrySerial();
+  #endif
 
   flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
-  displayOdometry();
+  // displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
   sparki_idx = ij_coordinates_to_vertex_index(sparki_i, sparki_j);
@@ -233,8 +240,11 @@ void loop() {
 
     case FIND_PERSON:
       if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD){
-        moveStop(); // just in case
-        current_state = CARRY_PERSON;
+        // moveStop(); // just in case
+        byte object_type = differentiateObject();
+        if (object_type == 255){
+          current_state = CARRY_PERSON;
+        }
       }
       else {
         // spin
@@ -275,7 +285,7 @@ void loop() {
       // We could use the controller here to manually transition to another state,
       // f.e. one that clears Sparki's current odometry information and assumes him
       // to be at the building entrance. TODO
-      sparki.RGB(RGB_RED);
+      sparki.RGB(RGB_ORANGE);
 
       break;
   }
