@@ -1,7 +1,7 @@
 #ifndef FINAL_PROJECT_DEFINES
 #define FINAL_PROJECT_DEFINES
 
-#define DEBUG // Define me to enable debug stuff.
+// #define DEBUG // Define me to enable debug stuff.
 
 // State machine defines
 #define PATH_PLANNING 0
@@ -48,6 +48,23 @@ const int CYCLE_TIME_US = CYCLE_TIME * 1000000;
 #define EAST 1
 #define SOUTH 2
 #define WEST 3
+
+// Wallbits
+#define W_N     0b10000000
+#define W_S     0b01000000
+#define W_E     0b00100000
+#define W_W     0b00010000
+#define W_NS    0b11000000
+#define W_NE    0b10100000
+#define W_NW    0b10010000
+#define W_SE    0b01100000
+#define W_SW    0b01010000
+#define W_EW    0b00110000
+#define W_NSE   0b11100000
+#define W_NSW   0b11010000
+#define W_NEW   0b10110000
+#define W_NSEW  0b11110000
+#define W_0     0b00000000
 
 // Map locations
 #define EXIT_IDX 0
