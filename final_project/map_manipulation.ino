@@ -1,7 +1,5 @@
 #include "final_project.h"
 
-#include <avr/pgmspace.h> // maybe unnecessary
-
 // Wallbits
 #define W_N     0b10000000
 #define W_S     0b01000000
@@ -19,7 +17,7 @@
 #define W_NSEW  0b11110000
 #define W_0     0b00000000
 
-byte types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
+byte types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] = {
   {EXIT,  FREE,   FREE,   FREE,   FREE,   FREE,
       FREE,  OBJECT, ENTRY,  OFFICE, ENTRY,  FREE,
       FREE,  OBJECT, OFFICE, OFFICE, OFFICE, FREE,
@@ -34,7 +32,7 @@ byte types[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
        FREE,  ENTRY,  OFFICE, OFFICE, OFFICE, FREE,
        FREE,  FREE,   FREE,   FREE,   FREE,   ELEVATOR}  // FLOOR 2
 };
-byte walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
+byte walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] = {
   {W_S,   W_S,    W_S,    W_NS,   W_NS,   W_SE,
      W_W,   W_0,    W_E,    W_SW,   W_S,    W_E,
      W_W,   W_N,    W_NE,   W_NW,   W_NE,   W_EW,
@@ -48,24 +46,22 @@ byte walls[NUM_FLOORS][NUM_X_CELLS * NUM_Y_CELLS] PROGMEM = {
        W_EW,  W_SW,   W_SE,   W_SW,  W_E,   W_EW,
        W_W,   W_N,    W_NE,   W_NW,  W_NE,  W_EW,
        W_NW,  W_NS,   W_NS,   W_NS,  W_NS,  W_NE}  // FLOOR 2
-}; // TODO convert this to storing directly in world_map, which will be less human-readable but will reenable LCD
+}; // TODO convert this to storing directly in world_map, which will be less human-readable but will reenable LCD?
 
 //**MAP BUILDING**//
 
 /* Call this function to initialize the map */
 void map_create(){
   
-  byte i; byte j; byte k; byte t;
+  byte i; byte j; byte k; byte t; byte w;
   byte curr_type, curr_wall;
   
   for(k = 0; k < NUM_FLOORS; k++){
-    t = 0;
+    t = 0; w = 0;
     for(j = 0; j < NUM_Y_CELLS; j++){
       for(i = 0; i < NUM_X_CELLS; i++){
-        curr_type = pgm_read_byte_near(&types[k * NUM_X_CELLS * NUM_Y_CELLS + t]);
-        curr_wall = pgm_read_byte_near(&walls[k * NUM_X_CELLS * NUM_Y_CELLS + t]);
-        cell_make(i, j, k, curr_type, curr_wall);
-        t++;
+        cell_make(i, j, k, types[k][t], walls[k][w]);
+        t++; w++;
       }
     }
   }
