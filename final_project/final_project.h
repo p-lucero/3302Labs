@@ -19,12 +19,12 @@
 #define CYCLE_TIME .100
 #define AXLE_DIAMETER 0.0865
 #define WHEEL_RADIUS 0.03
-#define SPARKI_GRAB_DISTANCE 4
+#define SPARKI_GRAB_DISTANCE 3
 #define SPARKI_GRIP_TIME 5000
 #define MAP_SIZE_X .9144
 #define MAP_SIZE_Y .9144
-#define DISTANCE_MARGIN 0.02 // 2cm of tolerance
-#define HEADING_MARGIN 0.061 // ~3.5 degrees of tolerance
+#define DISTANCE_MARGIN 0.01 // 2cm of tolerance TODO decrease these and see if that helps
+#define HEADING_MARGIN 0.041 // ~3.5 degrees of tolerance
 #define IR_THRESHOLD 700
 #define PING_DIST_THRESHOLD 12 // FIXME
 // as a special variable to improve readability; may improve performance as a const too
@@ -52,9 +52,9 @@ const int CYCLE_TIME_US = CYCLE_TIME * 1000000;
 // Map locations
 #define EXIT_IDX 0
 #define ELEVATOR_IDX 35
-#define INITIAL_GOAL_I 3
+#define INITIAL_GOAL_I 2
 #define INITIAL_GOAL_J 1
-#define INITIAL_GOAL_FLOOR 0
+#define INITIAL_GOAL_FLOOR 1
 
 // Cell types
 #define FREE 0

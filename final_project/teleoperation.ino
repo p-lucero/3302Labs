@@ -29,7 +29,7 @@ int numpad[10] = {25, 12, 24, 94, 8, 28, 90, 66, 82, 74}; // TODO this could go 
 //   }
 // }
 
-int find_num(byte code)
+int find_num(int code)
 {
   for (byte i = 0; i<10; i++)
   {
@@ -41,9 +41,10 @@ int find_num(byte code)
 
 void useElevator(){
   // block until Sparki receives a command that tells him he's in the elevator
+  moveStop();
   sparki.RGB(RGB_GREEN);
   int code = 0;
-  while (code != 13){
+  while (code != 9){
     delay(50);
     code = sparki.readIR();
   }
@@ -53,6 +54,7 @@ void useElevator(){
 byte differentiateObject(){
   // block until Sparki receives a command that tells him what object he's looking at
   // returns 0 for false alarm, 255 for person, and the cell type for if it's an actual object
+  moveStop();
   int code = 0;
   int code_num = 0;
   byte retval = 128;
@@ -77,6 +79,7 @@ byte differentiateObject(){
 byte* getNextTarget(){
   // block until Sparki receives commands detailing his next target or if he's done
   // returns NULL if done, or an array of three bytes representing the next coordinates to search
+  moveStop();
   sparki.RGB(RGB_BLUE);
   int code = 0;
   int code_num = 0;
@@ -91,13 +94,17 @@ byte* getNextTarget(){
       retval = new byte[3];
       byte counter = 0;
       while(counter < 3){
-        sparki.RGB(0, 0, (counter + 1) * 25); // scale RGB based on the current status of counter
+        // sparki.RGB(0, 0, (counter + 1) * 25); // scale RGB based on the current status of counter
         delay(50);
+        code = code_num = -1;
         code = sparki.readIR();
         code_num = find_num(code);
         if (code_num != -1){
           retval[counter] = code_num;
           counter++;
+          sparki.beep();
+          delay(1000);
+          // onIR();
         }
       }
       break;

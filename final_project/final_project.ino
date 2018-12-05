@@ -106,13 +106,19 @@ void loop() {
   // FIXME these may be unreliable, but I'd really rather not use their ping() implementation
   // may be worth copying it and coding our own that doesn't utilize a 20ms delay between each ping?
   // while also taking the best value. merits testing to see if it's necessary.
-  ping_dist = sparki.ping_single(); 
-  if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD && current_state != FIND_PERSON && current_state != CARRY_PERSON){
-    saved_state = current_state;
-    current_state = FOUND_OBJECT;
-    transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
-    transform_robot_to_world_coords(rx, ry, &wx, &wy);
-    transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
+  ping_dist = sparki.ping_single(); // TODO ping every cell change rather than every loop?
+  // TODO reimplement ping better
+  if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD){
+    if (current_state == FIND_PERSON || current_state == CARRY_PERSON || (goal_idx == EXIT_IDX && goal_floor == 0)){
+      // do nothing
+    }
+    else {
+      saved_state = current_state;
+      current_state = FOUND_OBJECT;
+      transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
+      transform_robot_to_world_coords(rx, ry, &wx, &wy);
+      transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
+    }
   }
 
   if (sparki.edgeLeft() < IR_THRESHOLD){
@@ -151,11 +157,13 @@ void loop() {
       }
 
       if (path_next == -1){
-        if (goal_floor == 0 && goal_idx == EXIT_IDX){
+        if (goal_floor != pose_floor)
+          current_state = IN_ELEVATOR;
+        else if (goal_floor == 0 && goal_idx == EXIT_IDX){
           moveStop();
           gripperOpen();
           byte* next_target = getNextTarget();
-          if (next_target == NULL){
+          if (next_target != NULL){
             goal_i = next_target[0];
             goal_j = next_target[1];
             goal_floor = next_target[2];
@@ -177,7 +185,7 @@ void loop() {
         }
 
         else switch(path_2next - path_next){
-          case NUM_X_CELLS: dest_pose_theta = M_PI / 2; break;
+          case NUM_X_CELLS: dest_pose_theta = M_PI / 2; break; // TODO check if we are at the exit and change the default
           case -NUM_X_CELLS: dest_pose_theta = M_PI / 2; break;
           case 1: dest_pose_theta = 0; break;
           case -1: dest_pose_theta = M_PI; break;
@@ -250,11 +258,11 @@ void loop() {
         // spin
         left_dir = DIR_CCW;
         left_wheel_rotating = FWD;
-        left_speed_pct = .5;
+        left_speed_pct = .25;
 
         right_dir = DIR_CCW;
         right_wheel_rotating = BCK;
-        right_speed_pct = .5;
+        right_speed_pct = .25;
 
         // FIXME rotate a little bit slower so we don't miss anyone, maybe unnecessary? needs testing
         sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
@@ -277,6 +285,7 @@ void loop() {
     case FINISHED:
       // Saved everybody that we meant to save, or encountered some other "completion" condition.
       // Probably does nothing. We could also flash the LED or whatnot.
+      sparki.RGB(RGB_WHITE);
 
       break;
     
