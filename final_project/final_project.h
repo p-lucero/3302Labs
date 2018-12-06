@@ -23,8 +23,8 @@
 #define SPARKI_GRIP_TIME 5000
 #define MAP_SIZE_X .9144
 #define MAP_SIZE_Y .9144
-#define DISTANCE_MARGIN 0.01 // 2cm of tolerance TODO decrease these and see if that helps
-#define HEADING_MARGIN 0.041 // ~3.5 degrees of tolerance
+#define DISTANCE_MARGIN 0.01 // 1cm of tolerance
+#define HEADING_MARGIN 0.041 // ~2.4 degrees of tolerance
 #define IR_THRESHOLD 700
 #define PING_DIST_THRESHOLD 12 // FIXME
 // as a special variable to improve readability; may improve performance as a const too

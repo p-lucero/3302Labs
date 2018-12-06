@@ -181,12 +181,17 @@ void loop() {
         vertex_index_to_ij_coordinates(path_next, &dest_i, &dest_j);
         ij_coordinates_to_xy_coordinates(dest_i, dest_j, &dest_pose_x, &dest_pose_y);
         if (path_2next == -1){
-          dest_pose_theta = 0;
+          if (goal_floor != pose_floor)
+            dest_pose_theta = -M_PI / 2;
+          else if (goal_idx == 0)
+            dest_pose_theta = M_PI;
+          else
+            dest_pose_theta = 0;
         }
 
         else switch(path_2next - path_next){
-          case NUM_X_CELLS: dest_pose_theta = M_PI / 2; break; // TODO check if we are at the exit and change the default
-          case -NUM_X_CELLS: dest_pose_theta = M_PI / 2; break;
+          case NUM_X_CELLS: dest_pose_theta = M_PI / 2; break;
+          case -NUM_X_CELLS: dest_pose_theta = -M_PI / 2; break;
           case 1: dest_pose_theta = 0; break;
           case -1: dest_pose_theta = M_PI; break;
           default: dest_pose_theta = 0; break;
@@ -264,7 +269,7 @@ void loop() {
         right_wheel_rotating = BCK;
         right_speed_pct = .25;
 
-        // FIXME rotate a little bit slower so we don't miss anyone, maybe unnecessary? needs testing
+        // rotate a little bit slower so we don't miss anyone
         sparki.motorRotate(MOTOR_LEFT, left_dir, int(left_speed_pct*100));
         sparki.motorRotate(MOTOR_RIGHT, right_dir, int(right_speed_pct*100));
       }

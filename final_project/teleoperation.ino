@@ -94,7 +94,6 @@ byte* getNextTarget(){
       retval = new byte[3];
       byte counter = 0;
       while(counter < 3){
-        // sparki.RGB(0, 0, (counter + 1) * 25); // scale RGB based on the current status of counter
         delay(50);
         code = code_num = -1;
         code = sparki.readIR();
@@ -103,8 +102,7 @@ byte* getNextTarget(){
           retval[counter] = code_num;
           counter++;
           sparki.beep();
-          delay(1000);
-          // onIR();
+          delay(1000); // don't hold the button for more than a second, or bad things happen.
         }
       }
       break;
