@@ -32,22 +32,22 @@ byte world_map[NUM_X_CELLS][NUM_Y_CELLS][NUM_FLOORS] = {
   OFFICE | W_SW, FREE | W_W,
   OFFICE | W_NW, FREE | W_NW,
   FREE | W_S, OFFICE | W_SE, // 1, 0
-  OBJECT | W_0, OFFICE | W_NE, 
+  OBJECT | W_0, OFFICE | W_NEW, 
   OBJECT | W_N, FREE | W_NS,
   FREE | W_S, OFFICE | W_SW, 
   ENTRY | W_0, ENTRY | W_N, 
   OFFICE | W_N, FREE | W_NS,
   FREE | W_S, OFFICE | W_SW, // 2, 0
-  ENTRY | W_E, ENTRY | W_W, 
-  OFFICE | W_NE, FREE | W_N,
-  FREE | W_NS, OFFICE | W_SE, 
-  OFFICE | W_S, OFFICE | W_NE, 
+  ENTRY | W_EW, ENTRY | W_W, 
+  OFFICE | W_NEW, FREE | W_N,
+  FREE | W_NS, OFFICE | W_SEW,
+  OFFICE | W_S, OFFICE | W_NEW, 
   OFFICE | W_N, FREE | W_NS,
   FREE | W_NS, OFFICE | W_S, // 3, 0
   OFFICE | W_SW, OFFICE | W_N, 
   OFFICE | W_NW, FREE | W_NS,
   FREE | W_NS, OFFICE | W_SW, 
-  OFFICE | W_SE, OFFICE | W_NW, 
+  OFFICE | W_SEW, OFFICE | W_NW, 
   OFFICE | W_NE, FREE | W_NS,
   FREE | W_NS, ENTRY | W_S, // 4, 0
   ENTRY | W_S, OFFICE | W_NE, 

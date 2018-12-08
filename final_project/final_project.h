@@ -1,7 +1,7 @@
 #ifndef FINAL_PROJECT_DEFINES
 #define FINAL_PROJECT_DEFINES
 
-// #define DEBUG // Define me to enable debug stuff.
+#define DEBUG // Define me to enable debug stuff.
 
 // State machine defines
 #define PATH_PLANNING 0
@@ -63,6 +63,7 @@ const int CYCLE_TIME_US = CYCLE_TIME * 1000000;
 #define W_NSE   0b11100000
 #define W_NSW   0b11010000
 #define W_NEW   0b10110000
+#define W_SEW   0b01110000
 #define W_NSEW  0b11110000
 #define W_0     0b00000000
 
