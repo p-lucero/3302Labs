@@ -122,7 +122,7 @@ void loop() {
   unsigned long begin_time = micros(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, saved_state, obj_i, obj_j;
   short path_curr, path_next, path_2next;
-  int ping_dist, flame_detected;
+  int ping_dist = -1, flame_detected;
   float rx, ry, wx, wy;
 
   #ifdef DEBUG
@@ -143,7 +143,7 @@ void loop() {
   // FIXME these may be unreliable, but I'd really rather not use their ping() implementation
   // may be worth copying it and coding our own that doesn't utilize a 20ms delay between each ping?
   // while also taking the best value. merits testing to see if it's necessary.
-  ping_dist = sparki.ping_single(); // TODO ping every cell change rather than every loop?
+  // ping_dist = sparki.ping_single(); // TODO ping every cell change rather than every loop?
   // TODO reimplement ping better
   if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD){
     if (current_state == FIND_PERSON || current_state == CARRY_PERSON || (goal_idx == EXIT_IDX && goal_floor == 0)){

@@ -127,8 +127,7 @@ void cell_make(byte i, byte j, byte k, byte type, byte wallbits){
 //**CELL byteERACTION**//
 
 byte cell_gettype(byte i, byte j, byte k){
-  byte type = world_map[i][j][k] & 0b00001111;
-  return type;
+  return world_map[i][j][k] & 0b00001111;
 }
 
 bool cell_isfree(byte i, byte j, byte k){

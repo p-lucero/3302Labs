@@ -1,7 +1,7 @@
 #ifndef FINAL_PROJECT_DEFINES
 #define FINAL_PROJECT_DEFINES
 
-#define DEBUG // Define me to enable debug stuff.
+// #define DEBUG // Define me to enable debug stuff.
 
 // State machine defines
 #define PATH_PLANNING 0
