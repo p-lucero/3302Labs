@@ -310,8 +310,8 @@ void loop() {
   // Check how long to delay, so that we take some time between cycles
   end_time = micros();
   if (abs(end_time - begin_time) < CYCLE_TIME_US)
-    delay(CYCLE_TIME_MS - abs(end_time - begin_time) / 1000);
+    delayMicroseconds(CYCLE_TIME_US - abs(end_time - begin_time));
   else
-    delay(10);
+    delayMicroseconds(10000);
   last_cycle_time = begin_time;
 }
