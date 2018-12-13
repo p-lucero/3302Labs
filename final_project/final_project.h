@@ -54,7 +54,7 @@ const int CYCLE_TIME_US = CYCLE_TIME * 1000000;
 #define ELEVATOR_IDX 35
 #define INITIAL_GOAL_I 2
 #define INITIAL_GOAL_J 1
-#define INITIAL_GOAL_FLOOR 0
+#define INITIAL_GOAL_FLOOR 1
 
 // Cell types
 #define FREE 0

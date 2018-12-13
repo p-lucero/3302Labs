@@ -17,9 +17,6 @@
 // Header file so that important defines are accessible from all .ino files
 #include "final_project.h"
 
-void moveStop();
-void moveForward();
-
 const float CELL_RESOLUTION_X = MAP_SIZE_X / NUM_X_CELLS;  // Line following map is ~60cm x ~42cm
 const float CELL_RESOLUTION_Y = MAP_SIZE_Y / NUM_Y_CELLS; // Line following map is ~60cm x ~42cm
 
@@ -41,13 +38,6 @@ unsigned long last_cycle_time = 0;
 
 short* path = NULL;
 
-void gripperOpen(){
-  moveStop();
-  sparki.gripperOpen();
-  delay(SPARKI_GRIP_TIME);
-  sparki.gripperStop();
-}
-
 void setup() {
   sparki.RGB(RGB_YELLOW);
   pinMode(FLAME_SENSOR, INPUT);
@@ -59,10 +49,9 @@ void setup() {
   goal_j = INITIAL_GOAL_J;
   goal_floor = INITIAL_GOAL_FLOOR;
   sparki.RGB(RGB_WHITE);
-  //Serial.print("finished setup");
 }
 
-/*void displayOdometrySerial() {
+void displayOdometrySerial() {
   Serial.print("X: "); Serial.print(pose_x); Serial.print(" Xg: "); Serial.println(dest_pose_x);
   Serial.print("Y: "); Serial.print(pose_y); Serial.print(" Yg: "); Serial.println(dest_pose_y); 
   Serial.print("T: "); Serial.print(pose_theta*180./M_PI); Serial.print(" Tg: "); Serial.println(dest_pose_theta*180./M_PI);
@@ -72,7 +61,14 @@ void setup() {
   Serial.print("p: "); Serial.print(d_err); Serial.print(" a: "); Serial.println(to_degrees(b_err));
   Serial.print("h: "); Serial.println(to_degrees(h_err));  
   Serial.print("s: "); Serial.println(current_state);
-}*/
+}
+
+void gripperOpen(){
+  moveStop();
+  sparki.gripperOpen();
+  delay(SPARKI_GRIP_TIME);
+  sparki.gripperStop();
+}
 
 void gripperClose(){
   moveStop();
@@ -93,7 +89,7 @@ void loop() {
   float rx, ry, wx, wy;
 
   #ifdef DEBUG
-  //displayOdometrySerial();
+  displayOdometrySerial();
   #endif
 
   flame_detected = digitalRead(FLAME_SENSOR);
@@ -137,7 +133,6 @@ void loop() {
 
   switch (current_state){
     case PATH_PLANNING:
-      //Serial.print("started path planning");
       if (path != NULL){
         delete path;
       }
@@ -149,8 +144,6 @@ void loop() {
       else
         current_state = PATH_FINDING_NEXT;
       break;
-
-      //Serial.print("ended path planning");
 
     case PATH_FINDING_NEXT:
       for (byte path_iter = 0; path[path_iter] != -1; path_iter++){
