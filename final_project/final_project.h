@@ -27,6 +27,7 @@
 #define HEADING_MARGIN 0.041 // ~2.4 degrees of tolerance
 #define IR_THRESHOLD 700
 #define PING_DIST_THRESHOLD 12 // FIXME
+#define OBJ_DETECT_TIMEOUT_DIFF 2000000
 // as a special variable to improve readability; may improve performance as a const too
 const short CYCLE_TIME_MS = CYCLE_TIME * 1000;
 const int CYCLE_TIME_US = CYCLE_TIME * 1000000;

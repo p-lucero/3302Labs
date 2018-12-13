@@ -35,6 +35,7 @@ short left_dir, right_dir, left_wheel_rotating = NONE, right_wheel_rotating = NO
 byte pose_floor = 0;
 byte dest_i, dest_j, goal_i, goal_j, goal_floor;
 unsigned long last_cycle_time = 0;
+unsigned long object_detection_timeout = 0;
 
 short* path = NULL;
 
@@ -107,12 +108,12 @@ void loop() {
   // may be worth copying it and coding our own that doesn't utilize a 20ms delay between each ping?
   // while also taking the best value. merits testing to see if it's necessary.
   ping_dist = sparki.ping_single(); // TODO ping every cell change rather than every loop?
-  // TODO reimplement ping better
+  
   if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD){
     if (current_state == FIND_PERSON || current_state == CARRY_PERSON || (goal_idx == EXIT_IDX && goal_floor == 0)){
       // do nothing
     }
-    else {
+    else if (object_detection_timeout < begin_time){
       saved_state = current_state;
       current_state = FOUND_OBJECT;
       transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
@@ -222,7 +223,8 @@ void loop() {
 
     case FOUND_OBJECT: {
       moveStop();
-      byte object_type = differentiateObject();
+      byte object_type = differentiateObject(flame_detected);
+      object_detection_timeout = micros() + OBJ_DETECT_TIMEOUT_DIFF; // wait two seconds before trying to detect another object
 
       if (object_type == 255){
         current_state = CARRY_PERSON;
@@ -254,7 +256,7 @@ void loop() {
     case FIND_PERSON:
       if (ping_dist != -1 && ping_dist < PING_DIST_THRESHOLD){
         // moveStop(); // just in case
-        byte object_type = differentiateObject();
+        byte object_type = differentiateObject(flame_detected);
         if (object_type == 255){
           current_state = CARRY_PERSON;
         }
