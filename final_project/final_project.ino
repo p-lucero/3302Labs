@@ -121,15 +121,15 @@ void loop() {
     }
   }
 
-  if (sparki.edgeLeft() < IR_THRESHOLD){
-    sparki.moveRight(1);
-    pose_theta -= to_radians(1);
-  }
+  // if (sparki.edgeLeft() < IR_THRESHOLD){
+  //   sparki.moveRight(1);
+  //   pose_theta -= to_radians(1);
+  // }
 
-  if (sparki.edgeRight() < IR_THRESHOLD){
-    sparki.moveLeft(1);
-    pose_theta += to_radians(1);
-  }
+  // if (sparki.edgeRight() < IR_THRESHOLD){
+  //   sparki.moveLeft(1);
+  //   pose_theta += to_radians(1);
+  // }
 
   switch (current_state){
     case PATH_PLANNING:
