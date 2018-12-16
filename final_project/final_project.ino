@@ -86,14 +86,26 @@ void loop() {
   unsigned long begin_time = micros(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, saved_state, obj_i, obj_j;
   short path_curr, path_next, path_2next;
-  int ping_dist, flame_detected = -1;
+  int ping_dist, flame_detected = -1, ir_read;
   float rx, ry, wx, wy;
 
   #ifdef DEBUG
   displayOdometrySerial();
   #endif
 
-  // flame_detected = digitalRead(FLAME_SENSOR);
+  flame_detected = digitalRead(FLAME_SENSOR);
+  ir_read = sparki.readIR();
+  if (ir_read == MAP_PRINT_DEBUG){
+    for (byte k = 0; k < NUM_FLOORS; k++){
+      for (byte j = 0; j < NUM_Y_CELLS; j++){
+        for (byte i = 0; i < NUM_X_CELLS; i++){
+          Serial.print((world_map[i][j][k] & UPPER_HALF) >> 4, 2); Serial.print(' '); Serial.print(world_map[i][j][k] & LOWER_HALF); Serial.print(' ');
+        }
+        Serial.print("\n");
+      }
+      Serial.print("\n\n");
+    }
+  }
 
   updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
   // displayOdometry();
@@ -122,16 +134,6 @@ void loop() {
       transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
     }
   }
-
-  // if (sparki.edgeLeft() < IR_THRESHOLD){
-  //   sparki.moveRight(1);
-  //   pose_theta -= to_radians(1);
-  // }
-
-  // if (sparki.edgeRight() < IR_THRESHOLD){
-  //   sparki.moveLeft(1);
-  //   pose_theta += to_radians(1);
-  // }
 
   switch (current_state){
     case PATH_PLANNING:
@@ -235,7 +237,10 @@ void loop() {
       }
       else {
         world_map[obj_i][obj_j][pose_floor] = (world_map[obj_i][obj_j][pose_floor] & UPPER_HALF) | (object_type & LOWER_HALF);
-        if (object_type == OBJECT || object_type == OBSTACLE || object_type == FIRE){
+        if (object_type == PERSON){
+          current_state = CARRY_PERSON;
+        }
+        else if (object_type == OBJECT || object_type == OBSTACLE || object_type == FIRE){
           bool path_blocked = false, sparki_found = false;
           byte obj_idx = ij_coordinates_to_vertex_index(obj_i, obj_j);
           for (byte path_iter = 0; path[path_iter] != -1; path_iter++){
