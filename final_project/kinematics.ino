@@ -9,6 +9,7 @@ float to_degrees(double rad) {
 }
 
 void moveForward() {
+  updateOdometryNow();
   left_dir = DIR_CCW;
   right_dir = DIR_CW;
   left_wheel_rotating = FWD;
@@ -19,6 +20,7 @@ void moveForward() {
 }
 
 void moveStop() {
+  updateOdometryNow();
   left_wheel_rotating = NONE;
   right_wheel_rotating = NONE;
   left_speed_pct = 0.0;
@@ -114,6 +116,12 @@ void updateOdometry(float cycle_time) {
               * cycle_time * ROBOT_SPEED / AXLE_DIAMETER;
   if (pose_theta > M_PI) pose_theta -= 2.*M_PI;
   if (pose_theta <= -M_PI) pose_theta += 2.*M_PI;
+}
+
+void updateOdometryNow(){
+  unsigned long current_time = micros();
+  updateOdometry(abs(current_time - last_odometry_update) / 1000000.0);
+  last_odometry_update = current_time;
 }
 
 void transform_us_to_robot_coords(float dist, float theta, float *rx, float *ry) {

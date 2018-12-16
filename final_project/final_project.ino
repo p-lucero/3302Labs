@@ -35,6 +35,7 @@ short left_dir, right_dir, left_wheel_rotating = NONE, right_wheel_rotating = NO
 byte pose_floor = 0;
 byte dest_i, dest_j, goal_i, goal_j, goal_floor;
 unsigned long last_cycle_time = 0;
+unsigned long last_odometry_update = 0;
 unsigned long object_detection_timeout = 0;
 
 short* path = NULL;
@@ -107,7 +108,7 @@ void loop() {
     }
   }
 
-  updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
+  // updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
   // displayOdometry();
 
   bool sparki_in_grid = xy_coordinates_to_ij_coordinates(pose_x, pose_y, &sparki_i, &sparki_j);
@@ -164,7 +165,6 @@ void loop() {
         if (goal_floor != pose_floor)
           current_state = IN_ELEVATOR;
         else if (goal_floor == 0 && goal_idx == EXIT_IDX){
-          moveStop();
           gripperOpen();
           byte* next_target = getNextTarget();
           if (next_target != NULL){
@@ -213,6 +213,7 @@ void loop() {
         current_state = PATH_FINDING_NEXT; 
       }
       else{
+        updateOdometryNow();
         set_IK_motor_rotations();
       }
       break;
@@ -270,6 +271,7 @@ void loop() {
         }
       }
       else {
+        updateOdometryNow();
         // spin
         left_dir = DIR_CCW;
         left_wheel_rotating = FWD;
@@ -288,7 +290,6 @@ void loop() {
     case CARRY_PERSON:
       moveForward();
       if (ping_dist <= SPARKI_GRAB_DISTANCE && ping_dist != -1){
-        moveStop();
         gripperClose();
         goal_i = 0;
         goal_j = 0;

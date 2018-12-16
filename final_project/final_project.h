@@ -20,7 +20,7 @@
 #define AXLE_DIAMETER 0.0865
 #define WHEEL_RADIUS 0.03
 #define SPARKI_GRAB_DISTANCE 3
-#define SPARKI_GRIP_TIME 5000
+#define SPARKI_GRIP_TIME 6000
 #define MAP_SIZE_X .9144
 #define MAP_SIZE_Y .9144
 #define DISTANCE_MARGIN 0.01 // 1cm of tolerance
