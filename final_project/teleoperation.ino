@@ -55,6 +55,7 @@ byte differentiateObject(int flame_detected){
   // block until Sparki receives a command that tells him what object he's looking at
   // returns 0 for false alarm, 255 for person, and the cell type for if it's an actual object
   if (flame_detected == 0){
+    sparki.beep();
     return FIRE;
   }
   moveStop();
