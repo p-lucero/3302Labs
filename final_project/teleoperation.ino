@@ -76,6 +76,7 @@ byte differentiateObject(int flame_detected){
       break;
     }
   }
+  delay(500);
   sparki.RGB(RGB_OFF);
   return retval;
 }

@@ -86,14 +86,14 @@ void loop() {
   unsigned long begin_time = micros(), end_time;
   byte sparki_i, sparki_j, sparki_idx, goal_idx, saved_state, obj_i, obj_j;
   short path_curr, path_next, path_2next;
-  int ping_dist, flame_detected;
+  int ping_dist, flame_detected = -1;
   float rx, ry, wx, wy;
 
   #ifdef DEBUG
   displayOdometrySerial();
   #endif
 
-  flame_detected = digitalRead(FLAME_SENSOR);
+  // flame_detected = digitalRead(FLAME_SENSOR);
 
   updateOdometry(abs(begin_time - last_cycle_time) / 1000000.0);
   // displayOdometry();
@@ -114,9 +114,10 @@ void loop() {
       // do nothing
     }
     else if (object_detection_timeout < begin_time){
+      ping_dist += PING_ERROR_MARGIN;
       saved_state = current_state;
       current_state = FOUND_OBJECT;
-      transform_us_to_robot_coords(ping_dist / 10.0, 0, &rx, &ry);
+      transform_us_to_robot_coords(ping_dist / 100.0, 0, &rx, &ry);
       transform_robot_to_world_coords(rx, ry, &wx, &wy);
       transform_xy_to_grid_coords(wx, wy, &obj_i, &obj_j);
     }
@@ -234,20 +235,22 @@ void loop() {
       }
       else {
         world_map[obj_i][obj_j][pose_floor] = (world_map[obj_i][obj_j][pose_floor] & UPPER_HALF) | (object_type & LOWER_HALF);
-        bool path_blocked = false, sparki_found = false;
-        byte obj_idx = ij_coordinates_to_vertex_index(obj_i, obj_j);
-        for (byte path_iter = 0; path[path_iter] != -1; path_iter++){
-          if (path[path_iter] == obj_idx && !sparki_found){
-            path_blocked = true;
-            break;
+        if (object_type == OBJECT || object_type == OBSTACLE || object_type == FIRE){
+          bool path_blocked = false, sparki_found = false;
+          byte obj_idx = ij_coordinates_to_vertex_index(obj_i, obj_j);
+          for (byte path_iter = 0; path[path_iter] != -1; path_iter++){
+            if (path[path_iter] == obj_idx && sparki_found){
+              path_blocked = true;
+              break;
+            }
+            else if (path[path_iter] == sparki_idx)
+              sparki_found = true;
           }
-          else if (path[path_iter] == sparki_idx)
-            sparki_found = true;
+          if (path_blocked)
+            current_state = PATH_PLANNING;
+          else
+            current_state = saved_state;
         }
-        if (path_blocked)
-          current_state = PATH_PLANNING;
-        else
-          current_state = saved_state;
       }
     }
       

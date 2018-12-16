@@ -129,7 +129,7 @@ void transform_robot_to_world_coords(float x, float y, float *gx, float *gy) {
 
 bool transform_xy_to_grid_coords(float x, float y, byte *i, byte *j) {
   // FINISHED: Return 0 if the X,Y coordinates were out of bounds
-  if((x >= .6) || (y >= .42)){
+  if((x >= MAP_SIZE_X) || (y >= MAP_SIZE_Y)){
     return 0; // returns 0 if x or y is beyond paper in positive direction
   }
   if((x < 0) || (y < 0)){
